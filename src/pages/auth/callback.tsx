@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
-import Head from 'next/head';
+import { Loader2 } from 'lucide-react';
+import { AuthCard, AuthShell } from '@/components/brand/AuthShell';
+import Link from 'next/link';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -12,7 +14,7 @@ export default function AuthCallback() {
     const handleAuthCallback = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Error getting session:', error);
           setError(error.message);
@@ -20,25 +22,20 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check if we have a redirect parameter
         const { redirect } = router.query;
-        
+
         if (data.session) {
           if (redirect && typeof redirect === 'string') {
-            // Validate the redirect URL to prevent open redirect vulnerabilities
             const isInternalRedirect = !redirect.startsWith('http://') && !redirect.startsWith('https://');
-            
-            // On production, don't allow redirects to localhost
             const isProduction = process.env.NODE_ENV === 'production';
             const isLocalhostRedirect = redirect.includes('localhost') || redirect.includes('127.0.0.1');
-            
+
             if (isInternalRedirect && !(isProduction && isLocalhostRedirect)) {
               router.push(redirect);
               return;
             }
           }
-          
-          // Default redirect if no valid redirect parameter
+
           router.push('/dashboard');
         } else {
           router.push('/');
@@ -57,45 +54,35 @@ export default function AuthCallback() {
 
   if (loading) {
     return (
-      <>
-        <Head>
-          <title>Authenticating... | Turbo</title>
-        </Head>
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
-            <h1 className="text-xl font-semibold mb-2">Authenticating...</h1>
-            <p className="text-gray-400">Please wait while we sign you in.</p>
-          </div>
-        </div>
-      </>
+      <AuthShell title="Authenticating... | Turbo">
+        <AuthCard className="text-center">
+          <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-4" />
+          <h1 className="text-lg font-semibold text-white mb-2">Authenticating</h1>
+          <p className="text-sm text-neutral-400">Please wait while we sign you in.</p>
+        </AuthCard>
+      </AuthShell>
     );
   }
 
   if (error) {
     return (
-      <>
-        <Head>
-          <title>Authentication Error | Turbo</title>
-        </Head>
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <div className="text-center max-w-md mx-auto px-4">
-            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-semibold mb-2 text-red-400">Authentication Error</h1>
-            <p className="text-gray-400 mb-6">{error}</p>
-            <button
-              onClick={() => router.push('/')}
-              className="bg-orange-600 hover:bg-orange-700 px-6 py-2 rounded-lg transition-colors"
-            >
-              Go Home
-            </button>
+      <AuthShell title="Authentication Error | Turbo">
+        <AuthCard className="text-center">
+          <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
           </div>
-        </div>
-      </>
+          <h1 className="text-lg font-semibold text-red-400 mb-2">Authentication Error</h1>
+          <p className="text-sm text-neutral-400 mb-6">{error}</p>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-white text-sm font-medium transition-all duration-200 active:scale-[0.97] shadow-lg shadow-orange-500/20"
+          >
+            Go Home
+          </Link>
+        </AuthCard>
+      </AuthShell>
     );
   }
 

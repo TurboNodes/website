@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { AuthCard, AuthShell } from '@/components/brand/AuthShell';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default function DesktopAuthError() {
@@ -10,17 +9,16 @@ export default function DesktopAuthError() {
 
   useEffect(() => {
     if (router.isReady) {
-      setErrorReason(router.query.reason as string || 'delivery_failed');
+      setErrorReason((router.query.reason as string) || 'delivery_failed');
     }
   }, [router.isReady, router.query.reason]);
 
   const retryPairing = () => {
-    // Go back to the desktop auth check page to retry
     router.push('/desktop-auth/check' + (router.query.port ? `?port=${router.query.port}` : ''));
   };
 
   const openDiscord = () => {
-    window.open("https://discord.gg/ZqdvQkSEc7", '_blank');
+    window.open('https://discord.gg/ZqdvQkSEc7', '_blank');
   };
 
   const getErrorMessage = () => {
@@ -28,103 +26,114 @@ export default function DesktopAuthError() {
       case 'delivery_failed':
         return {
           title: "Can't connect to your desktop app",
-          description: "We couldn't deliver the authentication to your desktop application. Your login was successful, but the connection to your local app failed.",
-          icon: <AlertTriangle className="w-6 h-6 text-orange-600" />
+          description:
+            "We couldn't deliver the authentication to your desktop application. Your login was successful, but the connection to your local app failed.",
         };
       case 'missing_port':
         return {
-          title: "Missing port parameter",
-          description: "A port number is required to connect to your desktop application. Please initiate the pairing process from your desktop app.",
-          icon: <AlertTriangle className="w-6 h-6 text-blue-600" />
+          title: 'Missing port parameter',
+          description:
+            'A port number is required to connect to your desktop application. Please initiate the pairing process from your desktop app.',
         };
       case 'not_authenticated':
         return {
-          title: "Authentication required",
-          description: "You need to sign in first before connecting your desktop application.",
-          icon: <AlertTriangle className="w-6 h-6 text-blue-600" />
+          title: 'Authentication required',
+          description:
+            'You need to sign in first before connecting your desktop application.',
         };
       default:
         return {
-          title: "Something went wrong",
-          description: "We encountered an issue while setting up your desktop app connection.",
-          icon: <AlertTriangle className="w-6 h-6 text-red-600" />
+          title: 'Something went wrong',
+          description:
+            'We encountered an issue while setting up your desktop app connection.',
         };
     }
   };
 
   const errorInfo = getErrorMessage();
 
+  const troubleshooting = (() => {
+    if (errorReason === 'delivery_failed') {
+      return {
+        title: 'Try these steps:',
+        items: [
+          'Make sure your Turbo Node is running on the same device',
+          'Close and restart your desktop application completely',
+          "Check that your firewall isn't blocking local connections",
+        ],
+        border: 'border-sky-500/30 bg-sky-500/5',
+        titleColor: 'text-sky-300',
+        textColor: 'text-neutral-400',
+      };
+    }
+    if (errorReason === 'missing_port') {
+      return {
+        title: 'How to fix this:',
+        items: [
+          'Open your Turbo desktop application',
+          'Look for a "Pair with web" or "Connect account" button',
+          'Click it to get the proper authentication link with port',
+        ],
+        border: 'border-amber-500/30 bg-amber-500/5',
+        titleColor: 'text-amber-300',
+        textColor: 'text-neutral-400',
+      };
+    }
+    return null;
+  })();
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mb-4">
-            {errorInfo.icon}
-          </div>
-          <CardTitle className="text-gray-800">{errorInfo.title}</CardTitle>
-          <CardDescription>
-            {errorInfo.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(errorReason === 'delivery_failed') && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-blue-800 mb-3">Try these steps to fix the issue:</h3>
-              <ul className="text-xs text-blue-700 space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">1.</span>
-                  <span>Make sure your Turbo Node is running on the same device</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">2.</span>
-                  <span>Close and restart your desktop application completely</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">3.</span>
-                  <span>Check that your firewall isn't blocking local connections</span>
-                </li>
-              </ul>
-            </div>
-          )}
+    <AuthShell title="Desktop Auth Error | Turbo">
+      <AuthCard>
+        <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-4 text-center">
+          // pairing_error
+        </p>
 
-          {errorReason === 'missing_port' && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-yellow-800 mb-3">How to fix this:</h3>
-              <ul className="text-xs text-yellow-700 space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">1.</span>
-                  <span>Open your Turbo desktop application</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">2.</span>
-                  <span>Look for a "Pair with web" or "Connect account" button</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">3.</span>
-                  <span>Click it to get the proper authentication link with port</span>
-                </li>
-              </ul>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-3">
-              {(errorReason === 'delivery_failed') && router.query.port && (
-                <Button onClick={retryPairing} className="w-full">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Try Pairing Again
-                </Button>
-              )}
-            </div>
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 bg-orange-500/10 border border-orange-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-6 h-6 text-orange-400" />
           </div>
+          <h1 className="text-lg font-semibold text-white mb-2">{errorInfo.title}</h1>
+          <p className="text-sm text-neutral-400 leading-relaxed">{errorInfo.description}</p>
+        </div>
 
-          <div className="text-center text-xs text-gray-500 pt-2">
-            Still having trouble? Our <Button variant="link" onClick={openDiscord} className="p-0 h-auto text-xs">
-               Discord community
-            </Button> is here to help you get connected.
+        {troubleshooting && (
+          <div className={`rounded-xl border p-4 mb-6 ${troubleshooting.border}`}>
+            <h3 className={`text-sm font-medium mb-3 ${troubleshooting.titleColor}`}>
+              {troubleshooting.title}
+            </h3>
+            <ul className={`text-xs space-y-2 ${troubleshooting.textColor}`}>
+              {troubleshooting.items.map((item, i) => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="font-mono text-neutral-600">{i + 1}.</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+
+        {errorReason === 'delivery_failed' && router.query.port && (
+          <button
+            onClick={retryPairing}
+            className="w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-white text-sm font-medium transition-all duration-200 active:scale-[0.97] shadow-lg shadow-orange-500/20 mb-4"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Try Pairing Again
+          </button>
+        )}
+
+        <p className="text-center text-xs text-neutral-600">
+          Still having trouble?{' '}
+          <button
+            onClick={openDiscord}
+            className="text-orange-400/80 hover:text-orange-400 underline underline-offset-2"
+          >
+            Join our Discord
+          </button>{' '}
+          for help.
+        </p>
+      </AuthCard>
+    </AuthShell>
   );
 }

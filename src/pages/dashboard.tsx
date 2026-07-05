@@ -1,12 +1,24 @@
 import React, { useEffect, useState } from "react";
-import Head from "next/head";
-import { Zap } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthButtons } from "@/components/AuthButtons";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { AuthCard, AuthShell } from "@/components/brand/AuthShell";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { WelcomeScreen } from "@/components/dashboard/WelcomeScreen";
+
+function LoadingState({ message }: { message: string }) {
+  return (
+    <AuthShell title="Loading... | Turbo">
+      <AuthCard className="text-center">
+        <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-4" />
+        <h1 className="text-lg font-semibold text-white mb-2">Loading Dashboard</h1>
+        <p className="text-sm text-neutral-400">{message}</p>
+      </AuthCard>
+    </AuthShell>
+  );
+}
 
 export default function TurboNodeDashboard() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -22,9 +34,7 @@ export default function TurboNodeDashboard() {
 
   const [showNoNodePopup, setShowNoNodePopup] = useState(false);
 
-  // Show "No Node setup" popup when user is authenticated but no node data exists
   useEffect(() => {
-    // Only show popup if we're definitely done loading and have confirmed no node data
     if (isAuthenticated && !loading && hasNodeData === false) {
       setShowNoNodePopup(true);
     } else {
@@ -32,87 +42,79 @@ export default function TurboNodeDashboard() {
     }
   }, [isAuthenticated, loading, hasNodeData]);
 
-  // Show loading state while checking authentication OR while loading data
   if (authLoading || (isAuthenticated && loading)) {
     return (
-      <>
-        <Head>
-          <title>Loading... | Turbo</title>
-        </Head>
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
-            <h1 className="text-xl font-semibold mb-2">Loading Dashboard...</h1>
-            <p className="text-gray-400">Please wait while we verify your authentication.</p>
-          </div>
-        </div>
-      </>
+      <LoadingState
+        message={
+          authLoading
+            ? "Please wait while we verify your authentication."
+            : "Fetching your node data..."
+        }
+      />
     );
   }
 
-  // Show login prompt if not authenticated
   if (!isAuthenticated) {
     return (
-      <>
-        <Head>
-          <title>Login Required | Turbo</title>
-        </Head>
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <div className="text-center max-w-md mx-auto px-4">
-            <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Zap className="w-8 h-8 text-orange-500" />
-            </div>
-            <h1 className="text-2xl font-bold mb-4">Login Required</h1>
-            <p className="text-gray-300 mb-8">
-              You need to be logged in to access the dashboard. Please sign in with your preferred provider.
-            </p>
-            <AuthButtons className="justify-center" />
-          </div>
-        </div>
-      </>
+      <AuthShell title="Sign In | Turbo">
+        <AuthCard>
+          <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-4">
+            // sign_in
+          </p>
+          <h1
+            className="text-white leading-tight mb-3"
+            style={{
+              fontFamily: "'Bitstream Iowan Old Style Bold BT', Georgia, serif",
+              fontSize: "clamp(1.75rem, 4vw, 2.25rem)",
+            }}
+          >
+            Access your dashboard.
+          </h1>
+          <p className="text-sm text-neutral-400 mb-8 leading-relaxed">
+            Sign in to view your node stats, earnings, and withdraw funds.
+          </p>
+          <AuthButtons layout="column" />
+        </AuthCard>
+      </AuthShell>
     );
   }
 
   return (
-    <>
-      <Head>
-        <title>Turbo Node Dashboard</title>
-      </Head>
-
-      <div className="h-screen bg-black text-white flex flex-col">
-        {/* Header */}
-        <DashboardHeader />
-
-        {/* Main Content */}
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
-              <h1 className="text-xl font-semibold mb-2">Loading Dashboard...</h1>
-              <p className="text-gray-400">Fetching your node data...</p>
-            </div>
+    <DashboardShell
+      title="Turbo Node Dashboard"
+      supabaseConnected={supabaseConnected}
+      activeNodes={
+        nodeStats?.filter((node) => node.isActive && node.isConnected).length ?? 0
+      }
+      totalNodes={nodeStats?.length ?? 0}
+    >
+      {loading ? (
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-4" />
+            <h1 className="text-lg font-semibold mb-2">Loading Dashboard</h1>
+            <p className="text-sm text-neutral-400">Fetching your node data...</p>
           </div>
-        ) : !userStats ? (
-          <WelcomeScreen />
-        ) : (
-          <DashboardContent
-            userStats={userStats}
-            nodeStats={nodeStats}
-            earningsHistory={earningsHistory}
-            loading={loading}
-            error={error}
-            supabaseConnected={supabaseConnected}
-          />
-        )}
+        </div>
+      ) : !userStats ? (
+        <WelcomeScreen />
+      ) : (
+        <DashboardContent
+          userStats={userStats}
+          nodeStats={nodeStats}
+          earningsHistory={earningsHistory}
+          loading={loading}
+          error={error}
+          supabaseConnected={supabaseConnected}
+        />
+      )}
 
-        {/* No Node Setup Popup */}
-        {showNoNodePopup && (
-          <WelcomeScreen 
-            showPopup={true} 
-            onClosePopup={() => setShowNoNodePopup(false)} 
-          />
-        )}
-      </div>
-    </>
+      {showNoNodePopup && (
+        <WelcomeScreen
+          showPopup={true}
+          onClosePopup={() => setShowNoNodePopup(false)}
+        />
+      )}
+    </DashboardShell>
   );
 }
