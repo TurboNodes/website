@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Loader2, Check, AlertCircle, LogIn } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { AuthButtons } from '@/components/AuthButtons';
+import { AuthCard, AuthShell } from '@/components/brand/AuthShell';
+import { Check, AlertCircle, Loader2, LogIn } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function DesktopAuthCheck() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function DesktopAuthCheck() {
   const sendUIDToDesktopApp = async (uid: string, port: string) => {
     try {
       setStatus('sending');
-      
+
       const response = await fetch(`http://localhost:${port}/auth-result`, {
         method: 'POST',
         body: uid,
@@ -23,7 +24,6 @@ export default function DesktopAuthCheck() {
 
       if (response.ok) {
         setStatus('success');
-        // Redirect to success page after successful delivery
         setTimeout(() => {
           router.push(`/desktop-auth/success?delivered=true`);
         }, 2000);
@@ -34,8 +34,7 @@ export default function DesktopAuthCheck() {
       console.error('Failed to send UID to desktop app:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
       setStatus('error');
-      
-      // Redirect to error page and preserve the port parameter
+
       setTimeout(() => {
         router.push(`/desktop-auth/error?reason=delivery_failed&port=${encodeURIComponent(port)}`);
       }, 3000);
@@ -45,138 +44,113 @@ export default function DesktopAuthCheck() {
   useEffect(() => {
     if (!loading && router.isReady) {
       const { port } = router.query;
-      
-      // Port is required - redirect to error if missing
+
       if (!port || typeof port !== 'string') {
         router.push('/desktop-auth/error?reason=missing_port');
         return;
       }
-      
+
       if (isAuthenticated && user) {
-        // Send UID to desktop app via HTTP POST
         sendUIDToDesktopApp(user.id, port);
       } else {
-        // User is not authenticated, set status to signup
         setStatus('signup');
-        // Store the port in localStorage so we can use it after authentication
         localStorage.setItem('desktop_auth_port', port);
       }
     }
   }, [loading, isAuthenticated, user, router]);
 
-  // After successful authentication, check if we need to continue with desktop auth
   useEffect(() => {
-    // This effect handles the case where the user signs in and we need to continue desktop auth
     if (isAuthenticated && user && status === 'signup') {
       const port = localStorage.getItem('desktop_auth_port');
       if (port) {
-        localStorage.removeItem('desktop_auth_port'); // Clean up
+        localStorage.removeItem('desktop_auth_port');
         sendUIDToDesktopApp(user.id, port);
       } else {
-        // No port stored, redirect to success page
         router.push(`/desktop-auth/success`);
       }
     }
   }, [isAuthenticated, user, status]);
 
-  const getStatusDisplay = () => {
+  const statusDisplay = (() => {
     switch (status) {
       case 'checking':
         return {
-          icon: <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />,
+          icon: <Loader2 className="w-6 h-6 text-orange-400 animate-spin" />,
           title: 'Checking Authentication',
-          description: 'Verifying your login status for desktop app access...',
-          bgColor: 'bg-blue-100',
-          showAuth: false,
+          description: 'Verifying your login status for desktop app access…',
+          iconBg: 'bg-orange-500/10 border-orange-500/30',
         };
       case 'sending':
         return {
-          icon: <Loader2 className="w-6 h-6 text-green-600 animate-spin" />,
+          icon: <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />,
           title: 'Sending to Desktop App',
-          description: 'Delivering your authentication details to the desktop application...',
-          bgColor: 'bg-green-100',
-          showAuth: false,
+          description: 'Delivering your authentication details to the desktop application…',
+          iconBg: 'bg-emerald-500/10 border-emerald-500/30',
         };
       case 'success':
         return {
-          icon: <Check className="w-6 h-6 text-green-600" />,
-          title: 'Success!',
+          icon: <Check className="w-6 h-6 text-emerald-400" />,
+          title: 'Success',
           description: 'Your UID has been successfully sent to the desktop app.',
-          bgColor: 'bg-green-100',
-          showAuth: false,
+          iconBg: 'bg-emerald-500/10 border-emerald-500/30',
         };
       case 'error':
         return {
-          icon: <AlertCircle className="w-6 h-6 text-red-600" />,
+          icon: <AlertCircle className="w-6 h-6 text-red-400" />,
           title: 'Delivery Failed',
           description: `Failed to pair desktop app: ${errorMessage}.`,
-          bgColor: 'bg-red-100',
-          showAuth: false,
+          iconBg: 'bg-red-500/10 border-red-500/30',
         };
       case 'signup':
         return {
-          icon: <LogIn className="w-6 h-6 text-blue-600" />,
+          icon: <LogIn className="w-6 h-6 text-orange-400" />,
           title: 'Authentication Required',
-          description: 'Please sign in or create an account to continue with desktop app authentication.',
-          bgColor: 'bg-blue-100',
-          showAuth: true,
+          description: 'Sign in to connect your desktop application.',
+          iconBg: 'bg-orange-500/10 border-orange-500/30',
         };
       default:
         return {
-          icon: <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />,
+          icon: <Loader2 className="w-6 h-6 text-orange-400 animate-spin" />,
           title: 'Processing',
-          description: 'Processing your request...',
-          bgColor: 'bg-blue-100',
-          showAuth: false,
+          description: 'Processing your request…',
+          iconBg: 'bg-orange-500/10 border-orange-500/30',
         };
     }
-  };
-
-  const statusDisplay = getStatusDisplay();
+  })();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className={`mx-auto w-12 h-12 ${statusDisplay.bgColor} rounded-full flex items-center justify-center mb-4`}>
+    <AuthShell title="Desktop Auth | Turbo">
+      <AuthCard>
+        <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-4 text-center">
+          // desktop_pairing
+        </p>
+
+        <div className="text-center mb-6">
+          <div
+            className={cn(
+              'mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 border',
+              statusDisplay.iconBg,
+            )}
+          >
             {statusDisplay.icon}
           </div>
-          <CardTitle>{statusDisplay.title}</CardTitle>
-          <CardDescription>
+          <h1 className="text-lg font-semibold text-white mb-2">
+            {statusDisplay.title}
+          </h1>
+          <p className="text-sm text-neutral-400 leading-relaxed">
             {statusDisplay.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          
-          {statusDisplay.showAuth && (
-            <div className="flex flex-col gap-4 mt-4">
-              <p className="text-sm text-center">Sign in with:</p>
-              <div className="flex justify-center gap-4">
-                <Button 
-                  onClick={auth.signInWithDiscord}
-                  className="bg-[#5865F2] hover:bg-[#4752C4] flex items-center gap-2"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Discord
-                </Button>
-                <Button 
-                  onClick={() => auth.signInWithGoogle(router.asPath)}
-                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 flex items-center gap-2"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Google
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-        
-        {statusDisplay.showAuth && (
-          <CardFooter className="flex justify-center">
-            <p className="text-xs text-gray-500">After signing in, you'll be automatically connected to the desktop app</p>
-          </CardFooter>
+          </p>
+        </div>
+
+        {status === 'signup' && (
+          <div className="space-y-4">
+            <AuthButtons layout="column" />
+            <p className="text-[11px] text-neutral-600 text-center">
+              After signing in, you&apos;ll be automatically connected to the desktop app.
+            </p>
+          </div>
         )}
-      </Card>
-    </div>
+      </AuthCard>
+    </AuthShell>
   );
 }

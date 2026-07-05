@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import { GetStaticProps } from "next";
-import { Calendar, User, ArrowRight, Search, Tag, Clock } from "lucide-react";
+import { Calendar, User, ArrowRight, Search, Clock } from "lucide-react";
 import { getSortedPostsData, getCategories, BlogPostMeta } from "../lib/blog";
 import Layout from "../components/Layout";
+import { cn } from "@/lib/utils";
 
 interface BlogPageProps {
   allPostsData: BlogPostMeta[];
@@ -54,138 +55,130 @@ export default function BlogPage({ allPostsData, categories }: BlogPageProps) {
         <link rel="canonical" href="https://turbo.network/blog" />
       </Head>
 
-      <Layout theme="light">
-        {/* Hero Section - Clean Paper Style */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 text-gray-900 leading-tight">
-              Turbo <span className="text-orange-600">Blog</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Stay updated with the latest news, tutorials, and insights from
-              the Turbo ecosystem
+      <Layout>
+        {/* Hero */}
+        <section className="px-6 sm:px-10 lg:px-14 pt-16 pb-12">
+          <div className="max-w-6xl mx-auto">
+            <p className="text-xs font-mono tracking-widest uppercase text-orange-600 mb-4">
+              // blog
             </p>
-            <div className="w-24 h-1 bg-orange-600 mx-auto rounded-full"></div>
+            <h1
+              className="text-neutral-900 leading-tight mb-4 max-w-2xl"
+              style={{
+                fontFamily: "'Bitstream Iowan Old Style Bold BT', Georgia, serif",
+                fontSize: "clamp(2.25rem, 5vw, 3.5rem)",
+              }}
+            >
+              Notes from the network.
+            </h1>
+            <p className="text-neutral-600 text-base sm:text-lg max-w-xl leading-relaxed">
+              Updates, tutorials, and technical deep dives from the Turbo
+              ecosystem.
+            </p>
           </div>
         </section>
 
-        {/* Search and Filter - Clean Design */}
-        <section className="px-4 sm:px-6 lg:px-8 mb-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <div className="flex flex-col md:flex-row gap-6 mb-8">
-                {/* Search */}
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search articles..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-                  />
-                </div>
-              </div>
+        {/* Search + categories */}
+        <section className="px-6 sm:px-10 lg:px-14 mb-10">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-2 order-2 md:order-1">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200",
+                    selectedCategory === category
+                      ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20"
+                      : "border border-neutral-200 bg-white text-neutral-600 hover:text-neutral-900 hover:border-neutral-300"
+                  )}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
 
-              {/* Categories */}
-              <div className="flex flex-wrap gap-3">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 shadow-sm ${
-                      selectedCategory === category
-                        ? "bg-orange-600 text-white shadow-lg transform scale-105"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
+            <div className="relative w-full md:max-w-xs order-1 md:order-2">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search articles..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-neutral-200 rounded-full text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 transition-colors"
+              />
             </div>
           </div>
         </section>
 
-        {/* Blog Posts - Enhanced Card Design */}
-        <section className="px-4 sm:px-6 lg:px-8 pb-20">
-          <div className="max-w-7xl mx-auto">
+        {/* Posts */}
+        <section className="px-6 sm:px-10 lg:px-14 pb-24">
+          <div className="max-w-6xl mx-auto">
             {filteredPosts.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="text-gray-400 mb-4">
-                  <Search className="w-16 h-16 mx-auto" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <div className="text-center py-20 rounded-2xl border border-neutral-200 bg-white">
+                <p className="text-xs font-mono tracking-widest uppercase text-neutral-400 mb-3">
+                  // no_results
+                </p>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
                   No articles found
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-sm text-neutral-500">
                   Try adjusting your search terms or category filter.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
                 {filteredPosts.map((post) => (
-                  <article key={post.slug} className="group">
-                    <Link href={`/blog/${post.slug}`}>
-                      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] h-full flex flex-col">
-                        <div className="p-8 flex-1 flex flex-col">
-                          <div className="flex items-center gap-2 mb-4">
-                            <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-full border border-orange-100">
-                              {post.category}
-                            </span>
-                            <div className="flex items-center gap-1 text-gray-500 text-xs">
-                              <Clock className="w-3 h-3" />
-                              <span>{post.readTime}</span>
-                            </div>
-                          </div>
-
-                          <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-orange-600 transition-colors flex-shrink-0">
-                            {post.title}
-                          </h2>
-
-                          <p className="text-gray-600 mb-6 line-clamp-3 flex-1">
-                            {post.excerpt}
-                          </p>
-
-                          <div className="space-y-4 mt-auto">
-                            <div className="flex items-center justify-between text-sm text-gray-500">
-                              <div className="flex items-center gap-2">
-                                <User className="w-4 h-4" />
-                                <span className="font-medium">
-                                  {post.author}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                <span>
-                                  {new Date(post.date).toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center text-orange-600 font-medium text-sm group-hover:underline">
-                                Read more
-                                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                              </div>
-                            </div>
-                          </div>
+                  <article key={post.slug} className="group h-full">
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      className="flex flex-col h-full rounded-2xl border border-neutral-200 bg-white hover:border-orange-500/40 hover:shadow-[0_0_24px_rgba(249,115,22,0.08)] transition-all duration-300 overflow-hidden"
+                    >
+                      <div className="p-6 sm:p-7 flex-1 flex flex-col">
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                          <span className="text-[11px] font-mono tracking-widest uppercase text-orange-600">
+                            {post.category}
+                          </span>
+                          <span className="flex items-center gap-1 text-neutral-400 text-xs shrink-0">
+                            <Clock className="w-3 h-3" />
+                            {post.readTime}
+                          </span>
                         </div>
 
-                        {post.tags && post.tags.length > 0 && (
-                          <div className="px-8 pb-6">
-                            <div className="flex flex-wrap gap-2">
-                              {post.tags.slice(0, 3).map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
-                                >
-                                  #{tag}
-                                </span>
-                              ))}
-                            </div>
+                        <h2 className="text-lg sm:text-xl font-semibold text-neutral-900 mb-3 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                          {post.title}
+                        </h2>
+
+                        <p className="text-sm text-neutral-600 leading-relaxed line-clamp-3 mb-6 flex-1">
+                          {post.excerpt}
+                        </p>
+
+                        <div className="mt-auto space-y-4">
+                          <div className="flex items-center justify-between text-xs text-neutral-500 border-t border-neutral-100 pt-4">
+                            <span className="flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5" />
+                              {post.author}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5" />
+                              {new Date(post.date).toLocaleDateString()}
+                            </span>
                           </div>
-                        )}
+
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center text-sm font-medium text-orange-600 group-hover:text-orange-700 transition-colors">
+                              Read article
+                              <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                            </span>
+                            {post.tags && post.tags.length > 0 && (
+                              <span className="hidden sm:flex gap-2 text-[11px] font-mono text-neutral-400">
+                                {post.tags.slice(0, 2).map((tag) => (
+                                  <span key={tag}>#{tag}</span>
+                                ))}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </Link>
                   </article>

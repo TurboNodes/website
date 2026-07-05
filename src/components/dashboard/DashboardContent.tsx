@@ -1,9 +1,9 @@
-import React from 'react';
-import { Coins, TrendingUp, Activity, Zap } from 'lucide-react';
-import { EarningsChart } from './EarningsChart';
-import { StatsCard } from './StatsCard';
-import { NodeStatus } from './NodeStatus';
-import { NodeStats, UserStats } from '@/types';
+import React from "react";
+import { Coins, TrendingUp, Activity, Zap } from "lucide-react";
+import { EarningsChart } from "./EarningsChart";
+import { StatsCard } from "./StatsCard";
+import { NodeStatus } from "./NodeStatus";
+import { NodeStats, UserStats } from "@/types";
 
 interface DashboardContentProps {
   userStats: UserStats | null;
@@ -14,12 +14,12 @@ interface DashboardContentProps {
   supabaseConnected: boolean;
 }
 
-export function DashboardContent({ 
+export function DashboardContent({
   userStats,
-  nodeStats, 
+  nodeStats,
   earningsHistory,
   error,
-  supabaseConnected 
+  supabaseConnected,
 }: DashboardContentProps) {
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
   const formatBytes = (bytes: number) => {
@@ -30,70 +30,66 @@ export function DashboardContent({
     return `${mb.toFixed(2)} MB`;
   };
 
-  // Calculate aggregated stats from all nodes
-  const totalBandwidth = nodeStats?.reduce((sum, node) => sum + (node.bandwidthUsed || 0), 0) || 0;
-  const totalRequests = nodeStats?.reduce((sum, node) => sum + (node.requestCount || 0), 0) || 0;
-  const activeNodesCount = nodeStats?.filter(node => node.isActive && node.isConnected).length || 0;
+  const totalBandwidth =
+    nodeStats?.reduce((sum, node) => sum + (node.bandwidthUsed || 0), 0) || 0;
+  const totalRequests =
+    nodeStats?.reduce((sum, node) => sum + (node.requestCount || 0), 0) || 0;
+  const weekTotal = earningsHistory.reduce((sum, v) => sum + v, 0);
+  const avgDaily = earningsHistory.length
+    ? weekTotal / earningsHistory.length
+    : 0;
 
   return (
-    <div className="flex-1 p-6 h-full overflow-hidden">
-      {/* Grid Layout: Left side for chart and stats, Right side for node status */}
-      <div className="grid grid-cols-12 gap-6 h-full">
+    <div className="h-full flex flex-col gap-5 p-5 sm:p-6 lg:p-8 overflow-hidden">
+      {/* KPI strip */}
+      <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatsCard
+          icon={Coins}
+          title="Total Earnings"
+          value={formatCurrency(userStats?.totalEarnings || 0)}
+          subtitle="Lifetime"
+        />
+        <StatsCard
+          icon={TrendingUp}
+          title="Today's Earnings"
+          value={formatCurrency(userStats?.todayEarnings || 0)}
+          subtitle="Since midnight UTC"
+          accent="emerald"
+        />
+        <StatsCard
+          icon={Activity}
+          title="Bandwidth Used"
+          value={formatBytes(totalBandwidth)}
+          subtitle="Across all nodes"
+        />
+        <StatsCard
+          icon={Zap}
+          title="Requests Served"
+          value={totalRequests.toLocaleString()}
+          subtitle="Total handled"
+        />
+      </div>
 
-        {/* Left Column - Node Status */}
-        <div className="col-span-3 flex flex-col ">
-          {/* Additional stats at the top of right column */}
-          <div className="mb-6">
-            <StatsCard
-              icon={Coins}
-              title="Total Earnings"
-              value={formatCurrency(userStats?.totalEarnings || 0)}
-            />
-          </div>
-
-          {/* Node Status Component */}
-          <div className="flex-1">
-            <NodeStatus 
-              nodeStats={nodeStats} 
-              isConnected={supabaseConnected && !!userStats} 
-            />
-          </div>
+      {/* Main panels */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+        <div className="lg:col-span-8 min-h-[280px] lg:min-h-0 flex flex-col">
+          <EarningsChart
+            data={earningsHistory}
+            weekTotal={weekTotal}
+            avgDaily={avgDaily}
+          />
         </div>
-        
-        {/* Right Column - Stats and Chart */}
-        <div className="col-span-9 flex flex-col gap-6 h-full">
-          
-          {/* Stats Cards Row */}
-          <div className="grid grid-cols-3 gap-6">
-            <StatsCard
-              icon={TrendingUp}
-              title="Today's Earnings"
-              value={formatCurrency(userStats?.todayEarnings || 0)}
-            />
-            <StatsCard
-              icon={Activity}
-              title="Bandwidth Used"
-              value={formatBytes(totalBandwidth)}
-            />
-            <StatsCard
-              icon={Zap}
-              title="Requests Served"
-              value={totalRequests.toLocaleString()}
-            />
-          </div>
 
-          {/* Earnings Chart - Takes remaining space */}
-          <div className="flex-1 min-h-0">
-            <div className="h-full">
-              <EarningsChart data={earningsHistory} />
-            </div>
-          </div>
+        <div className="lg:col-span-4 min-h-[320px] lg:min-h-0 flex flex-col">
+          <NodeStatus
+            nodeStats={nodeStats}
+            isConnected={supabaseConnected && !!userStats}
+          />
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-900 border border-red-700 text-red-100 px-4 py-2 rounded-lg">
+        <div className="fixed bottom-4 right-4 z-50 bg-red-950/90 border border-red-500/30 text-red-300 px-4 py-2.5 rounded-xl backdrop-blur-sm shadow-lg">
           <p className="text-sm">{error}</p>
         </div>
       )}

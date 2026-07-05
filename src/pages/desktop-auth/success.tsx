@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Truck } from 'lucide-react';
+import { AuthCard, AuthShell } from '@/components/brand/AuthShell';
+import { Check, Loader2, Truck } from 'lucide-react';
 
 export default function DesktopAuthSuccess() {
   const router = useRouter();
@@ -12,7 +12,6 @@ export default function DesktopAuthSuccess() {
       const isDelivered = !!router.query.delivered;
       setDelivered(isDelivered);
 
-      // Redirect to dashboard after 2 seconds
       const timeout = setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
@@ -22,61 +21,53 @@ export default function DesktopAuthSuccess() {
   }, [router.isReady, router.query.delivered, router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            {delivered ? (
-              <Truck className="w-6 h-6 text-green-600" />
-            ) : (
-              <Check className="w-6 h-6 text-green-600" />
-            )}
-          </div>
-          <CardTitle className="text-green-800">Authentication Successful</CardTitle>
-          <CardDescription>
-            {delivered 
-              ? "Your authentication has been delivered to the desktop app." 
-              : "Your desktop application has been successfully authenticated."
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {delivered && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-green-800 text-sm font-medium">
-                <Truck className="w-4 h-4" />
-                Successfully Delivered to Desktop App
-              </div>
-              <p className="text-xs text-green-700 mt-1">
-                Your authentication has been automatically sent to your desktop application.
-              </p>
-            </div>
+    <AuthShell title="Desktop Auth Success | Turbo">
+      <AuthCard className="text-center">
+        <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-4">
+          // pairing_success
+        </p>
+
+        <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          {delivered ? (
+            <Truck className="w-6 h-6 text-emerald-400" />
+          ) : (
+            <Check className="w-6 h-6 text-emerald-400" />
           )}
+        </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">What's Next:</h3>
-            <ul className="text-xs text-blue-700 space-y-1">
-              {delivered ? (
-                <>
-                  <li>• Your desktop app has received the authentication</li>
-                  <li>• You can now use all authenticated features</li>
-                  <li>• This window will automatically redirect to your dashboard</li>
-                </>
-              ) : (
-                <>
-                  <li>• Your authentication was successful</li>
-                  <li>• You can now access your dashboard</li>
-                </>
-              )}
-            </ul>
-          </div>
+        <h1
+          className="text-white leading-tight mb-3"
+          style={{
+            fontFamily: "'Bitstream Iowan Old Style Bold BT', Georgia, serif",
+            fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+          }}
+        >
+          You&apos;re connected.
+        </h1>
 
-          <div className="text-center">
-            <p className="text-sm font-bold text-gray-700">Redirecting to dashboard automatically...</p>
+        <p className="text-sm text-neutral-400 mb-6 leading-relaxed">
+          {delivered
+            ? 'Your authentication has been delivered to the desktop app.'
+            : 'Your desktop application has been successfully authenticated.'}
+        </p>
+
+        {delivered && (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 mb-4 text-left">
+            <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium mb-1">
+              <Truck className="w-4 h-4" />
+              Delivered to desktop app
+            </div>
+            <p className="text-xs text-neutral-400">
+              Your authentication was automatically sent to your desktop application.
+            </p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+
+        <div className="flex items-center justify-center gap-2 text-sm text-neutral-500">
+          <Loader2 className="w-4 h-4 animate-spin text-orange-400" />
+          Redirecting to dashboard…
+        </div>
+      </AuthCard>
+    </AuthShell>
   );
 }
-
