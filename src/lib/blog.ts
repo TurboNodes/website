@@ -105,7 +105,7 @@ export async function getPostData(slug: string): Promise<BlogPost> {
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeGithubAlerts)
+    .use(rehypeGithubAlerts, {})
     .use(rehypeHighlight)
     .use(rehypeSlug)
     .use(rehypeAutolinkHeadings, { 
