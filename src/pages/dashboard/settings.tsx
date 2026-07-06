@@ -1,8 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { AuthButtons } from "@/components/AuthButtons";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { AuthCard, AuthShell } from "@/components/brand/AuthShell";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { AccountSection } from "@/components/settings/AccountSection";
@@ -10,45 +9,19 @@ import { PayoutWalletSection } from "@/components/settings/PayoutWalletSection";
 import { SessionSection } from "@/components/settings/SessionSection";
 
 export default function SettingsPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useRequireAuth();
 
-  if (authLoading) {
+  if (authLoading || !isAuthenticated) {
     return (
       <AuthShell title="Loading... | Turbo">
         <AuthCard className="text-center">
           <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-4" />
-          <h1 className="text-lg font-semibold text-white mb-2">
-            Loading Settings
-          </h1>
+          <h1 className="text-lg font-semibold text-white mb-2">Loading Settings</h1>
           <p className="text-sm text-neutral-400">
-            Please wait while we verify your authentication.
+            {authLoading
+              ? "Please wait while we verify your authentication."
+              : "Redirecting to sign in..."}
           </p>
-        </AuthCard>
-      </AuthShell>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <AuthShell title="Sign In | Turbo">
-        <AuthCard>
-          <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-4">
-            // sign_in
-          </p>
-          <h1
-            className="text-white leading-tight mb-3"
-            style={{
-              fontFamily:
-                "'Bitstream Iowan Old Style Bold BT', Georgia, serif",
-              fontSize: "clamp(1.75rem, 4vw, 2.25rem)",
-            }}
-          >
-            Access your settings.
-          </h1>
-            <p className="text-sm text-neutral-400 mb-8 leading-relaxed">
-            Sign in to manage your account and payout wallet.
-          </p>
-          <AuthButtons layout="column" />
         </AuthCard>
       </AuthShell>
     );

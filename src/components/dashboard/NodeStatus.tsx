@@ -1,7 +1,9 @@
 import React from "react";
-import { Activity, MapPin, Wifi, Clock, HardDrive, Server } from "lucide-react";
+import Link from "next/link";
+import { Activity, MapPin, Wifi, Clock, HardDrive, Server, Plus, ArrowRight } from "lucide-react";
 import { NodeStats } from "@/types";
 import { cn } from "@/lib/utils";
+import { buildDownloadPagePath } from "@/lib/turboClientDownload";
 
 interface NodeStatusProps {
   nodeStats: NodeStats[] | null;
@@ -44,6 +46,13 @@ export function NodeStatus({ nodeStats, isConnected }: NodeStatusProps) {
           <p className="text-xs text-neutral-500 max-w-[200px]">
             Install the Turbo client to register your first node
           </p>
+          <Link
+            href={buildDownloadPagePath()}
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-neutral-700 bg-neutral-800/60 px-5 py-2.5 text-sm font-medium text-neutral-200 hover:border-neutral-600 hover:bg-neutral-800 hover:text-white transition-colors"
+          >
+            Download client
+            <ArrowRight className="w-4 h-4" />
+          </Link>
           <span className="mt-4 inline-block text-[11px] font-mono text-neutral-500 border border-neutral-800 bg-neutral-950/50 px-3 py-1 rounded-full">
             offline
           </span>
@@ -153,6 +162,14 @@ export function NodeStatus({ nodeStats, isConnected }: NodeStatusProps) {
           );
         })}
       </div>
+
+      <Link
+        href={buildDownloadPagePath()}
+        className="shrink-0 mt-3 pt-3 border-t border-neutral-800/60 flex w-full items-center justify-center gap-1.5 text-[11px] text-neutral-600 hover:text-orange-400/80 transition-colors"
+      >
+        <Plus className="w-3 h-3" />
+        Deploy more nodes
+      </Link>
     </div>
   );
 }
