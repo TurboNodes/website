@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Globe2, LineChart, ShieldCheck } from "lucide-react";
+import { ArrowRight, Activity, Brain, Globe2, LineChart, ShieldCheck } from "lucide-react";
 import { NetworkAccessForm } from "./NetworkAccessForm";
 import { NodeDiagram } from "./NodeDiagram";
 import styles from "./network-access.module.css";
@@ -12,6 +12,16 @@ const STATS = [
 ] as const;
 
 const USE_CASES = [
+  {
+    icon: Brain,
+    title: "LLM / AI lab data ingestion",
+    body: "Feed training and evaluation pipelines with fresh, geo-diverse web data — scraped at scale through residential egress that looks like real users.",
+  },
+  {
+    icon: Activity,
+    title: "Global real-time monitoring",
+    body: "Track pricing, availability, and content changes worldwide with low-latency checks from local IPs in every major market.",
+  },
   {
     icon: LineChart,
     title: "Market research",
@@ -67,7 +77,7 @@ export function NetworkAccessPage() {
               <p
                 className={`max-w-lg text-base leading-relaxed text-[#5c6470] sm:text-lg ${styles.fadeUp} ${styles.fadeUpDelay2}`}
               >
-                Turbo Network Access routes your workloads through a distributed
+                Turbo Network routes your workloads through a distributed
                 mesh of residential nodes — built for businesses, researchers,
                 and automators who need reliable, geo-diverse web data.
               </p>
@@ -110,7 +120,7 @@ export function NetworkAccessPage() {
               </h2>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {USE_CASES.map(({ icon: Icon, title, body }) => (
                 <article
                   key={title}

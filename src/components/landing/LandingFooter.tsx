@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { useRef, type CSSProperties, type RefObject } from "react";
 import { useFooterScrollProgress } from "@/hooks/useFooterScrollProgress";
+import { scrollToLandingSection } from "@/lib/landingScroll";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/blog", label: "Blog" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/download", label: "Download" },
-  { href: "/network-access", label: "Network Access" },
+  { href: "/network", label: "Network Access" },
 ] as const;
 
 const SOCIALS = [
@@ -40,6 +41,10 @@ const GLOW_EXPANDED_HEIGHT_DVH =
 const GLOW_HEIGHT_GROW_DVH = GLOW_EXPANDED_HEIGHT_DVH - GLOW_BASE_HEIGHT_DVH;
 const LOCKUP_LIFT_REM = 6.75;
 const LOGO_EXPAND_ROTATE_DEG = 360;
+
+function easeInOutSine(t: number) {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
+}
 
 function FooterLink({
   href,
@@ -94,10 +99,7 @@ export function LandingFooter({ scrollContainerRef }: LandingFooterProps) {
   const contentOpacity = 0.25 + progress * 0.75;
   const contentShift = (1 - progress) * 28;
   const titleFontSize = `calc(clamp(1.5rem, 4vw, 2rem) + ${progress * 0.875}rem)`;
-  const logoTransform =
-    progress === 0
-      ? undefined
-      : `rotate(${progress * LOGO_EXPAND_ROTATE_DEG}deg)`;
+  const logoRotation = easeInOutSine(progress) * LOGO_EXPAND_ROTATE_DEG;
   const contentStyle = {
     "--footer-p": progress,
     opacity: contentOpacity,
@@ -107,10 +109,10 @@ export function LandingFooter({ scrollContainerRef }: LandingFooterProps) {
   return (
     <footer
       ref={footerRef}
-      className="relative flex min-h-dvh w-full flex-col items-center justify-end px-6 pb-[9dvh] pt-[20dvh] sm:pb-[11dvh] sm:pt-[22dvh]"
+      className="relative flex min-h-dvh w-full flex-col items-center justify-end px-6 pb-[9dvh] pt-0 sm:pb-[11dvh]"
     >
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 from-0% via-neutral-950/80 via-[18%] to-transparent to-[28%]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 from-0% via-neutral-950/60 via-[4%] to-transparent to-[8%]" />
 
         <div
           className="absolute bottom-0 left-1/2 h-[42dvh] w-[78vw] max-w-[620px] will-change-transform"
@@ -146,9 +148,7 @@ export function LandingFooter({ scrollContainerRef }: LandingFooterProps) {
           href="#hero"
           onClick={(e) => {
             e.preventDefault();
-            document
-              .getElementById("hero")
-              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            void scrollToLandingSection("hero");
           }}
           className="group flex flex-col items-center transition-opacity duration-200 hover:opacity-90"
         >
@@ -160,15 +160,11 @@ export function LandingFooter({ scrollContainerRef }: LandingFooterProps) {
           >
             <div className="flex flex-row items-center gap-[calc(0.375rem+var(--footer-p)*0.125rem)]">
               <span
-                className="inline-flex shrink-0 transition-transform will-change-transform"
-                style={
-                  logoTransform
-                    ? {
-                        transform: logoTransform,
-                        transformOrigin: "center center",
-                      }
-                    : undefined
-                }
+                className="inline-flex shrink-0 will-change-transform"
+                style={{
+                  transform: `rotate(${logoRotation}deg)`,
+                  transformOrigin: "center center",
+                }}
               >
                 <img
                   src="/logo.png"

@@ -66,7 +66,7 @@ export function StepCard({
       {/* Square illustration */}
       <div
         className={cn(
-          "shrink-0 aspect-square w-36 sm:w-44 lg:w-52 border-l border-neutral-800/80 bg-neutral-950/70",
+          "shrink-0 aspect-square w-36 sm:w-44 lg:w-48 border-l border-neutral-800/80 bg-neutral-950/70",
           "flex items-center justify-center p-3 sm:p-4",
           isLocked && "grayscale"
         )}

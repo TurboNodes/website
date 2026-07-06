@@ -1,6 +1,7 @@
 import type { AppProps } from "next/app";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { BlogScrollRestoration } from "@/components/blog/BlogScrollRestoration";
 import { Web3Provider } from "@/components/providers/Web3Provider";
 import "@/pages/globals.css";
 import "@/components/landing/landing-hero.css";
@@ -19,6 +20,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <Web3Provider>
       <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <BlogScrollRestoration />
         <Component {...pageProps} />
         <Analytics />
       </div>

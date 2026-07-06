@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import { rehypeGithubAlerts } from 'rehype-github-alerts';
 import {unified} from 'unified';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
@@ -104,6 +105,7 @@ export async function getPostData(slug: string): Promise<BlogPost> {
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeGithubAlerts)
     .use(rehypeHighlight)
     .use(rehypeSlug)
     .use(rehypeAutolinkHeadings, { 

@@ -68,6 +68,16 @@ export function getArtifactArchiveName(
   return `${getArtifactName(platform, arch)}.zip`;
 }
 
+export function getDownloadFilename(
+  platform: Exclude<Platform, "" | "unknown">,
+  arch: Architecture
+): string {
+  if (platform === "macos") {
+    return getArtifactName(platform, arch);
+  }
+  return getArtifactArchiveName(platform, arch);
+}
+
 export function buildDownloadUrl(
   platform: Exclude<Platform, "" | "unknown">,
   arch: Architecture
@@ -172,7 +182,7 @@ export async function downloadTurboClient(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const url = buildDownloadUrl(platform, arch);
-    const fallbackFilename = getArtifactArchiveName(platform, arch);
+    const fallbackFilename = getDownloadFilename(platform, arch);
 
     const response = await fetch(url);
     if (!response.ok) {
