@@ -114,15 +114,14 @@ export function InstallStep({ state, platform, onConfirm }: InstallStepProps) {
             disabled={isLocked}
             className={cn(
               "group w-full inline-flex items-center justify-between pl-3.5 pr-1 py-1",
-              "bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-amber-500",
-              "disabled:from-neutral-800 disabled:to-neutral-800 disabled:text-neutral-500",
-              "disabled:cursor-not-allowed rounded-full text-white font-medium text-sm",
-              "transition-all duration-200 active:scale-[0.97]",
-              "shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30"
+              "rounded-full font-medium text-sm transition-all duration-200",
+              isLocked
+                ? "bg-neutral-800 text-neutral-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-white active:scale-[0.97] shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30"
             )}
           >
             <span>I&apos;ve installed</span>
-            <span className="flex items-center justify-center w-7 h-7 bg-white/15 rounded-full group-hover:bg-white/25 transition-colors">
+            <span className="flex items-center justify-center w-7 h-7 bg-white/10 rounded-full transition-colors">
               <ArrowRight className="w-3.5 h-3.5 text-white" />
             </span>
           </button>

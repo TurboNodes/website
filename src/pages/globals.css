@@ -202,7 +202,15 @@
   }
 
   .prose-blog blockquote {
-    @apply border-l-4 border-orange-500/60 pl-6 italic mt-8 text-neutral-700 bg-orange-50 py-4 rounded-r-lg;
+    @apply border-l-4 border-orange-500/60 p-4 my-6 rounded-r-lg bg-orange-50 text-neutral-700;
+  }
+
+  .prose-blog blockquote p {
+    @apply mb-0 text-neutral-700;
+  }
+
+  .prose-blog blockquote p + p {
+    @apply mt-3;
   }
 
   .prose-blog code {

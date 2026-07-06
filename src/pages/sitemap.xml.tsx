@@ -17,6 +17,18 @@ function generateSiteMap(posts: any[]) {
        <priority>0.9</priority>
      </url>
      <url>
+       <loc>https://turbo.network/download</loc>
+       <lastmod>${new Date().toISOString()}</lastmod>
+       <changefreq>weekly</changefreq>
+       <priority>0.8</priority>
+     </url>
+     <url>
+       <loc>https://turbo.network/network-access</loc>
+       <lastmod>${new Date().toISOString()}</lastmod>
+       <changefreq>weekly</changefreq>
+       <priority>0.8</priority>
+     </url>
+     <url>
        <loc>https://turbo.network/dashboard</loc>
        <lastmod>${new Date().toISOString()}</lastmod>
        <changefreq>weekly</changefreq>

@@ -2,7 +2,10 @@ import { ChevronDown } from "lucide-react";
 
 export function LandingHero() {
   return (
-    <section className="relative min-h-dvh flex flex-col snap-start overflow-hidden bg-neutral-950">
+    <section
+      id="hero"
+      className="relative min-h-dvh flex flex-col snap-start overflow-hidden bg-neutral-950"
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/hero-powerlines.jpg"

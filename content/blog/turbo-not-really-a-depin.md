@@ -1,12 +1,12 @@
 ---
-title: "Turbo stands out, it's not really a DePIN project"
+title: "Is Turbo a DePIN project?"
 excerpt: "A deep dive into what blockchain really is and how to use it effectively."
 author: "Lished"
 date: "2025-08-19"
 category: "Analysis"
 slug: "turbo-not-really-a-depin"
-image: "/blog/economics-analysis.jpg"
-tags: ["economics", "analysis", "infrastructure", "decentralization"]
+image: "/blog/depin.jpeg"
+tags: ["infrastructure", "depin", "economics", "decentralization"]
 metaDescription: ""
 ---
 
