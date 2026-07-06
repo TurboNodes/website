@@ -41,7 +41,7 @@ export default function AuthCallback() {
 
           router.push('/dashboard');
         } else {
-          router.push('/');
+          router.push('/login');
         }
       } catch (err) {
         console.error('Unexpected error in auth callback:', err);

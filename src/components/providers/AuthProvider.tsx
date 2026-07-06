@@ -188,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           loading: false,
           error: null,
         });
-        router.push("/");
+        router.push("/login");
         return;
       }
 
@@ -205,7 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: null,
       });
 
-      router.push("/");
+      router.push("/login");
     } catch (err) {
       console.error("Unexpected error during sign-out:", err);
       setAuthState({
@@ -214,7 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: false,
         error: null,
       });
-      router.push("/");
+      router.push("/login");
     }
   }, [router]);
 
