@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ChainSelector } from "@/components/shared/ChainSelector";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { useReferrals } from "@/hooks/useReferrals";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import {
   PAYOUT_CHAINS,
@@ -33,11 +34,13 @@ function formatUsdc(amount: number) {
 export function WithdrawalSection() {
   const { preferences, loading: prefsLoading } = useUserPreferences();
   const { userStats, loading: statsLoading } = useSupabaseRealtime();
+  const { referralBalance, loading: referralLoading } = useReferrals();
 
   const [selectedChain, setSelectedChain] = useState<PayoutChain>("eth");
   const chainWallet = getPayoutWalletForChain(preferences, selectedChain);
   const chainConfig = PAYOUT_CHAINS.find((c) => c.id === selectedChain)!;
-  const availableBalance = userStats?.totalEarnings ?? 0;
+  const nodeEarnings = userStats?.totalEarnings ?? 0;
+  const availableBalance = nodeEarnings + referralBalance;
 
   const [amount, setAmount] = useState("");
   const [amountError, setAmountError] = useState<string | null>(null);
@@ -45,7 +48,7 @@ export function WithdrawalSection() {
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
-  const loading = prefsLoading || statsLoading;
+  const loading = prefsLoading || statsLoading || referralLoading;
   const parsedAmount = parseFloat(amount) || 0;
   const canWithdraw =
     !!chainWallet &&
@@ -151,6 +154,10 @@ export function WithdrawalSection() {
           </p>
           <p className="text-2xl font-semibold text-white">
             {formatUsdc(availableBalance)}
+          </p>
+          <p className="text-xs text-neutral-500 mt-2">
+            Node earnings: {formatUsdc(nodeEarnings)} · Referral earnings:{" "}
+            {formatUsdc(referralBalance)}
           </p>
         </div>
 

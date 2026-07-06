@@ -24,6 +24,7 @@ Create a `.env.local` file with the following variables:
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 
 # WalletConnect (optional) — enables the WalletConnect payout wallet connector.
 # Obtain a project ID from https://cloud.walletconnect.com
@@ -35,6 +36,22 @@ GITHUB_TOKEN=your-github-token
 ```
 
 If `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is omitted, browser-injected wallets (e.g. MetaMask) still work; only the WalletConnect option is hidden.
+
+## Referral system
+
+Apply the Supabase migrations before using referrals:
+
+```bash
+# Run in the Supabase SQL editor (in order):
+# 1. supabase/migrations/001_referrals.sql
+# 2. supabase/migrations/002_restore_grants.sql
+# 3. supabase/migrations/003_commission_only_new_users.sql
+# 4. supabase/migrations/004_node_earnings_only_commission.sql
+```
+
+Migration `004_node_earnings_only_commission.sql` ensures commissions are calculated from **node operator earnings only** — referral balance and non-date `dailyEarnings` entries never count.
+
+Referral rewards: **10% lifetime commission** on referred users' **node operator earnings** only. Referral income a user receives from their own referrals is never commissionable for their referrer. Commissions are calculated automatically via database triggers when node earnings update. Only **new signups** can be attributed via a referral link.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

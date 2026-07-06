@@ -6,9 +6,11 @@ interface AuthButtonsProps {
   className?: string;
   /** Stack buttons vertically (login screens) */
   layout?: 'row' | 'column';
+  /** Path to redirect to after OAuth completes */
+  redirectTo?: string;
 }
 
-export function AuthButtons({ className = '', layout = 'row' }: AuthButtonsProps) {
+export function AuthButtons({ className = '', layout = 'row', redirectTo }: AuthButtonsProps) {
   const { user, loading, signInWithDiscord, signInWithGoogle, signOut, isAuthenticated } = useAuth();
 
   if (loading) {
@@ -62,7 +64,7 @@ export function AuthButtons({ className = '', layout = 'row' }: AuthButtonsProps
       )}
     >
       <button
-        onClick={signInWithDiscord}
+        onClick={() => signInWithDiscord(redirectTo)}
         className={cn(
           'flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 active:scale-[0.97]',
           'bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-lg shadow-[#5865F2]/20',
@@ -75,7 +77,7 @@ export function AuthButtons({ className = '', layout = 'row' }: AuthButtonsProps
         Continue with Discord
       </button>
       <button
-        onClick={() => signInWithGoogle()}
+        onClick={() => signInWithGoogle(redirectTo)}
         className={cn(
           'flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 active:scale-[0.97]',
           'bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-200',

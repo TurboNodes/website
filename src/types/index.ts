@@ -30,3 +30,32 @@ export interface EarningsDay {
   date: string; // Format: "YYYY-MM-DD"
   earnings: number;
 }
+
+export interface ReferredUser {
+  id: string;
+  label: string;
+  status: "active" | "pending";
+  totalEarnings: number;
+  commissionEarned: number;
+  joinedAt: string;
+}
+
+export interface ReferralEarningEntry {
+  id: string;
+  type: "milestone_bonus" | "commission";
+  amount: number;
+  sourceEarningsDelta: number | null;
+  referredId: string;
+  createdAt: string;
+}
+
+export interface ReferralStats {
+  referralCode: string;
+  referralLink: string;
+  referralBalance: number;
+  commissionTotal: number;
+  totalReferred: number;
+  activeReferred: number;
+  referredUsers: ReferredUser[];
+  recentEarnings: ReferralEarningEntry[];
+}

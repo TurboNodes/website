@@ -1,23 +1,21 @@
 import React from "react";
 import Head from "next/head";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { DashboardHeader } from "./DashboardHeader";
 
 interface DashboardShellProps {
   title: string;
-  supabaseConnected?: boolean;
-  activeNodes?: number;
-  totalNodes?: number;
   children: React.ReactNode;
 }
 
 /** Shared dashboard chrome: ambient glow, grid backdrop, header and main area. */
-export function DashboardShell({
-  title,
-  supabaseConnected = false,
-  activeNodes = 0,
-  totalNodes = 0,
-  children,
-}: DashboardShellProps) {
+export function DashboardShell({ title, children }: DashboardShellProps) {
+  const { isConnected, nodeStats } = useSupabaseRealtime();
+
+  const activeNodes =
+    nodeStats?.filter((node) => node.isActive && node.isConnected).length ?? 0;
+  const totalNodes = nodeStats?.length ?? 0;
+
   return (
     <>
       <Head>
@@ -39,7 +37,7 @@ export function DashboardShell({
         </div>
 
         <DashboardHeader
-          supabaseConnected={supabaseConnected}
+          supabaseConnected={isConnected}
           activeNodes={activeNodes}
           totalNodes={totalNodes}
         />

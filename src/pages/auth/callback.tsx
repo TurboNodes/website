@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
+import { bootstrapUserAfterAuth } from '@/lib/claimReferral';
 import { Loader2 } from 'lucide-react';
 import { AuthCard, AuthShell } from '@/components/brand/AuthShell';
 import Link from 'next/link';
@@ -25,6 +26,8 @@ export default function AuthCallback() {
         const { redirect } = router.query;
 
         if (data.session) {
+          await bootstrapUserAfterAuth(data.session);
+
           if (redirect && typeof redirect === 'string') {
             const isInternalRedirect = !redirect.startsWith('http://') && !redirect.startsWith('https://');
             const isProduction = process.env.NODE_ENV === 'production';

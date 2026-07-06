@@ -6,6 +6,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Node operator earnings use date keys (YYYY-MM-DD) in dailyEarnings. */
+export function isNodeEarningsDateKey(key: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(key);
+}
+
+function sumNodeDailyEarnings(dailyEarnings: Record<string, number>): number {
+  return Object.entries(dailyEarnings).reduce((sum, [key, earnings]) => {
+    if (!isNodeEarningsDateKey(key)) return sum;
+    return sum + earnings;
+  }, 0);
+}
+
 /**
  * Extract earnings data from multiple nodes' dailyEarnings JSON structure
  * and convert to 7-day array for chart display (optimized for speed)
@@ -20,6 +32,7 @@ export function extractEarningsHistory(nodes: NodeStats[]): number[] {
   nodes.forEach(node => {
     if (node.dailyEarnings) {
       Object.entries(node.dailyEarnings).forEach(([dateString, earnings]) => {
+        if (!isNodeEarningsDateKey(dateString)) return;
         // Calculate days difference from today
         const earningsDate = new Date(dateString);
         const daysDiff = Math.floor((today.getTime() - earningsDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -49,11 +62,9 @@ export function calculateTodayEarnings(nodes: NodeStats[]): number {
 }
 
 /**
- * Calculate total earnings from nodes' dailyEarnings JSON
+ * Calculate total node operator earnings from nodes' dailyEarnings JSON.
+ * Excludes non-date keys (e.g. referral payout entries).
  */
 export function calculateTotalEarnings(nodes: NodeStats[]): number {
-  return nodes.reduce((total, node) => {
-    const nodeTotal = Object.values(node.dailyEarnings).reduce((sum, earnings) => sum + earnings, 0);
-    return total + nodeTotal;
-  }, 0);
+  return nodes.reduce((total, node) => total + sumNodeDailyEarnings(node.dailyEarnings), 0);
 }

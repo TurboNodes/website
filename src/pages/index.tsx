@@ -1,5 +1,7 @@
 import Head from "next/head";
+import type { GetServerSideProps } from "next";
 import { LandingPage } from "@/components/landing/LandingPage";
+import { getReferralCookieHeaderValue, isValidReferralCode, normalizeReferralCode } from "@/lib/referrals";
 
 export default function Home() {
   return (
@@ -21,3 +23,20 @@ export default function Home() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const ref = context.query.ref;
+  if (typeof ref === "string" && isValidReferralCode(ref)) {
+    const referralCode = normalizeReferralCode(ref);
+    context.res.setHeader("Set-Cookie", getReferralCookieHeaderValue(referralCode));
+
+    return {
+      redirect: {
+        destination: `/join?ref=${encodeURIComponent(referralCode)}`,
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: {} };
+};
