@@ -1,7 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { unzipSync } from "fflate";
 import {
   CLIENT_NODE_REPO,
   getArtifactName,
+  getDownloadFilename,
   type Architecture,
   type Platform,
 } from "@/lib/turboClientDownload";
@@ -87,6 +89,54 @@ async function resolveArtifactDownloadUrl(
   return location;
 }
 
+async function downloadArtifactZip(
+  artifact: GitHubArtifact,
+  token: string
+): Promise<Uint8Array> {
+  // Follow redirects from the GitHub API; auth is stripped automatically on
+  // cross-origin redirect to the signed blob-storage URL.
+  const response = await fetch(artifact.archive_download_url, {
+    redirect: "follow",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub artifact download failed: ${response.status}`);
+  }
+
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+function extractDmgFromArtifactZip(
+  zipData: Uint8Array,
+  artifactName: string
+): Uint8Array {
+  const files = unzipSync(zipData);
+  const dmgName = Object.keys(files).find(
+    (name) => name === artifactName || name.endsWith(".dmg")
+  );
+
+  if (!dmgName) {
+    throw new Error("DMG not found in artifact archive");
+  }
+
+  return files[dmgName];
+}
+
+function serveMacosDmg(
+  res: NextApiResponse,
+  dmgData: Uint8Array,
+  filename: string
+) {
+  res.setHeader("Content-Type", "application/x-apple-diskimage");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Length", dmgData.byteLength);
+  return res.status(200).send(Buffer.from(dmgData));
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -106,6 +156,7 @@ export default async function handler(
   }
 
   const artifactName = getArtifactName(parsed.platform, parsed.arch);
+  const downloadFilename = getDownloadFilename(parsed.platform, parsed.arch);
 
   try {
     const artifact = await findLatestArtifact(artifactName, token);
@@ -116,7 +167,20 @@ export default async function handler(
     }
 
     if (req.method === "HEAD") {
+      if (parsed.platform === "macos") {
+        res.setHeader("Content-Type", "application/x-apple-diskimage");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${downloadFilename}"`
+        );
+      }
       return res.status(200).end();
+    }
+
+    if (parsed.platform === "macos") {
+      const zipData = await downloadArtifactZip(artifact, token);
+      const dmgData = extractDmgFromArtifactZip(zipData, artifactName);
+      return serveMacosDmg(res, dmgData, downloadFilename);
     }
 
     const downloadUrl = await resolveArtifactDownloadUrl(artifact, token);

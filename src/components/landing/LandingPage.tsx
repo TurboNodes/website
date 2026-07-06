@@ -1,5 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useHideOnScroll } from "@/hooks/useHideOnScroll";
+import { useLandingScroll } from "@/hooks/useLandingScroll";
+import {
+  animateScrollTo,
+  scrollToLandingSection,
+} from "@/lib/landingScroll";
 import { LandingFooter } from "./LandingFooter";
 import { OnboardingNav } from "./OnboardingNav";
 import { LandingHero } from "./LandingHero";
@@ -8,7 +13,9 @@ import { OnboardingInstallSection } from "./OnboardingInstallSection";
 
 export function LandingPage() {
   const scrollRef = useRef<HTMLElement>(null);
+  const footerSectionRef = useRef<HTMLElement>(null);
   const { hidden, animate } = useHideOnScroll(scrollRef);
+  useLandingScroll(scrollRef, footerSectionRef);
 
   useEffect(() => {
     document.documentElement.classList.add("landing-scroll");
@@ -19,7 +26,7 @@ export function LandingPage() {
     function scrollToHash() {
       const id = window.location.hash.slice(1);
       if (!id) return;
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      void scrollToLandingSection(id, scrollRef.current);
     }
 
     scrollToHash();
@@ -32,13 +39,16 @@ export function LandingPage() {
       <OnboardingNav hidden={hidden} animate={animate} theme="dark" />
       <main
         ref={scrollRef}
-        className="snap-y snap-mandatory h-dvh overflow-y-auto overflow-x-hidden overscroll-y-contain bg-neutral-950"
+        className="landing-scroll-main h-dvh overflow-y-auto overflow-x-hidden overscroll-y-contain bg-neutral-950 snap-none"
       >
         <LandingHero />
         <NodeExplainer />
         <OnboardingInstallSection />
-        <section className="relative h-[200dvh] snap-end bg-neutral-950">
-          <div className="sticky top-0 h-dvh snap-start">
+        <section
+          ref={footerSectionRef}
+          className="relative -mt-[42dvh] h-[200dvh] bg-neutral-950"
+        >
+          <div className="sticky top-0 h-dvh">
             <LandingFooter scrollContainerRef={scrollRef} />
           </div>
         </section>

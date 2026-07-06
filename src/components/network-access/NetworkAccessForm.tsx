@@ -3,6 +3,8 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import styles from "./network-access.module.css";
 
 const USE_CASE_OPTIONS = [
+  "LLM / AI lab data ingestion",
+  "Global real-time monitoring",
   "Market research",
   "Web scraping / automation",
   "Ad verification",

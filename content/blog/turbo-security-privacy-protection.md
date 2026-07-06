@@ -1,7 +1,7 @@
 ---
-title: "Why is Turbo secure as hell"
+title: "Why is Turbo secure"
 excerpt: "Understanding the security measures and privacy protections built into the Turbo network."
-author: "Mike Rodriguez"
+author: "Lished"
 date: "2025-06-03"
 category: "Security"
 slug: "turbo-security-privacy-protection"

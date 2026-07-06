@@ -1,10 +1,11 @@
 import { ChevronDown } from "lucide-react";
+import { scrollToLandingSection } from "@/lib/landingScroll";
 
 export function LandingHero() {
   return (
     <section
       id="hero"
-      className="relative min-h-dvh flex flex-col snap-start overflow-hidden bg-neutral-950"
+      className="relative min-h-dvh flex flex-col overflow-hidden bg-neutral-950"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -40,9 +41,7 @@ export function LandingHero() {
           href="#how-it-works"
           onClick={(e) => {
             e.preventDefault();
-            document
-              .getElementById("how-it-works")
-              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            void scrollToLandingSection("how-it-works");
           }}
           className="hero-text-reveal hero-text-reveal-delay-3 mt-auto flex flex-col items-center gap-1 pb-10 text-white/70 hover:text-white transition-colors"
           aria-label="Scroll to learn more"

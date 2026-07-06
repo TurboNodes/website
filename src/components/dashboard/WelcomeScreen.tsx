@@ -1,8 +1,14 @@
-import React from "react";
+import React, { useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { X } from "lucide-react";
+import { markOnboardingDownloadComplete } from "@/hooks/useOnboardingProgress";
 import { useTurboDownload } from "@/hooks/useTurboDownload";
-import { buildDownloadPagePath } from "@/lib/turboClientDownload";
+import {
+  buildDownloadPagePath,
+  isSupportedPlatform,
+  ONBOARDING_SECTION_ID,
+} from "@/lib/turboClientDownload";
 import { TurboDownloadButton } from "@/components/shared/TurboDownloadButton";
 
 interface WelcomeScreenProps {
@@ -11,8 +17,19 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({ showPopup = false, onClosePopup }: WelcomeScreenProps) {
+  const router = useRouter();
   const { platform, osName, isDownloading, download, isReady, downloadError } =
     useTurboDownload();
+
+  const handleDownload = useCallback(async () => {
+    const success = await download();
+    if (!success || !showPopup) return;
+
+    if (isSupportedPlatform(platform)) {
+      markOnboardingDownloadComplete(platform);
+    }
+    void router.push(`/#${ONBOARDING_SECTION_ID}`);
+  }, [download, platform, router, showPopup]);
 
   const content = (
     <div className="text-center">
@@ -36,7 +53,7 @@ export function WelcomeScreen({ showPopup = false, onClosePopup }: WelcomeScreen
 
       <div className="space-y-4">
         <TurboDownloadButton
-          onClick={download}
+          onClick={handleDownload}
           disabled={!isReady}
           isDownloading={isDownloading}
           platform={platform}

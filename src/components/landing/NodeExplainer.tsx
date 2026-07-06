@@ -20,7 +20,7 @@ export function NodeExplainer() {
   return (
     <section
       id="how-it-works"
-      className="relative min-h-dvh flex items-center snap-start bg-neutral-950"
+      className="relative min-h-dvh flex items-center bg-neutral-950"
     >
       <div className="w-full max-w-6xl mx-auto px-6 py-24 lg:py-0 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Copy */}

@@ -42,7 +42,7 @@ export function OnboardingPipeline() {
   }
 
   return (
-    <div className="relative z-10 flex flex-1 items-center justify-center w-full px-6 sm:px-10 pt-24 pb-12">
+    <div className="relative z-10 flex flex-1 items-start justify-center w-full px-6 sm:px-10 pt-24 sm:pt-28 pb-12">
       <div className="w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl mx-auto">
         <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-10">
           // setup

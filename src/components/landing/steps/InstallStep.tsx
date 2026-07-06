@@ -14,8 +14,7 @@ function getInstallCopy(platform: Platform): string[] {
   switch (platform) {
     case "macos":
       return [
-        "Extract the downloaded .zip if needed",
-        "Open the .dmg file inside",
+        "Open the downloaded .dmg file",
         "Drag Turbo into Applications",
       ];
     case "windows":

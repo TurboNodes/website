@@ -202,15 +202,19 @@
   }
 
   .prose-blog blockquote {
-    @apply border-l-4 border-orange-500/60 p-4 my-6 rounded-r-lg bg-orange-50 text-neutral-700;
+    @apply border-l-4 border-neutral-300 pl-4 pr-4 my-4 text-neutral-500;
   }
 
   .prose-blog blockquote p {
-    @apply mb-0 text-neutral-700;
+    @apply mb-0 text-neutral-500;
   }
 
   .prose-blog blockquote p + p {
     @apply mt-3;
+  }
+
+  .prose-blog blockquote em {
+    @apply text-neutral-500;
   }
 
   .prose-blog code {
@@ -309,6 +313,83 @@
 
   .prose-blog .success-box {
     @apply bg-emerald-50 border-l-4 border-emerald-500/60 p-4 my-6 rounded-r-lg text-neutral-700;
+  }
+
+  /* GitHub-style alerts (rehype-github-alerts) */
+  .prose-blog .markdown-alert {
+    @apply rounded-r-lg my-6 text-neutral-700;
+    padding: 0.75rem 1rem;
+    border-left-width: 0.25rem;
+    border-left-style: solid;
+  }
+
+  .prose-blog .markdown-alert > :first-child {
+    @apply mt-0;
+  }
+
+  .prose-blog .markdown-alert > :last-child {
+    @apply mb-0;
+  }
+
+  .prose-blog .markdown-alert-title {
+    @apply flex items-center font-semibold mb-2;
+  }
+
+  .prose-blog .markdown-alert p {
+    @apply mb-3 leading-7;
+  }
+
+  .prose-blog .markdown-alert p:last-child {
+    @apply mb-0;
+  }
+
+  .prose-blog .markdown-alert-note {
+    @apply bg-sky-50 border-sky-500/70;
+  }
+
+  .prose-blog .markdown-alert-note .markdown-alert-title {
+    @apply text-sky-700;
+    fill: rgb(3 105 161);
+  }
+
+  .prose-blog .markdown-alert-tip {
+    @apply bg-emerald-50 border-emerald-500/70;
+  }
+
+  .prose-blog .markdown-alert-tip .markdown-alert-title {
+    @apply text-emerald-700;
+    fill: rgb(4 120 87);
+  }
+
+  .prose-blog .markdown-alert-important {
+    @apply bg-violet-50 border-violet-500/70;
+  }
+
+  .prose-blog .markdown-alert-important .markdown-alert-title {
+    @apply text-violet-700;
+    fill: rgb(109 40 217);
+  }
+
+  .prose-blog .markdown-alert-warning {
+    @apply bg-amber-50 border-amber-500/70;
+  }
+
+  .prose-blog .markdown-alert-warning .markdown-alert-title {
+    @apply text-amber-800;
+    fill: rgb(146 64 14);
+  }
+
+  .prose-blog .markdown-alert-caution {
+    @apply bg-red-50 border-red-500/70;
+  }
+
+  .prose-blog .markdown-alert-caution .markdown-alert-title {
+    @apply text-red-700;
+    fill: rgb(185 28 28);
+  }
+
+  .prose-blog .markdown-alert .octicon {
+    @apply mr-2 shrink-0;
   }
 
   /* Responsive adjustments */
