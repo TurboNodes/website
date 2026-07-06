@@ -1,10 +1,9 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useTurboDownload } from "@/hooks/useTurboDownload";
-import { CLIENT_NODE_ACTIONS_URL } from "@/lib/turboClientDownload";
-import { OSLogo } from "@/components/landing/ui/OSLogos";
-import { cn } from "@/lib/utils";
+import { buildDownloadPagePath } from "@/lib/turboClientDownload";
+import { TurboDownloadButton } from "@/components/shared/TurboDownloadButton";
 
 interface WelcomeScreenProps {
   showPopup?: boolean;
@@ -36,49 +35,15 @@ export function WelcomeScreen({ showPopup = false, onClosePopup }: WelcomeScreen
       </p>
 
       <div className="space-y-4">
-        <button
+        <TurboDownloadButton
           onClick={download}
           disabled={!isReady}
-          aria-busy={isDownloading}
-          className={cn(
-            "group inline-flex items-center justify-between pl-5 pr-1.5 py-2",
-            "rounded-full font-medium text-base",
-            isDownloading
-              ? "pointer-events-none cursor-wait bg-gradient-to-r from-neutral-800 to-neutral-800 text-neutral-500 shadow-none"
-              : cn(
-                  "bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-amber-500",
-                  "disabled:from-neutral-800 disabled:to-neutral-800 disabled:text-neutral-500",
-                  "disabled:cursor-not-allowed text-white",
-                  "shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30",
-                ),
-            showPopup ? "w-full" : "mx-auto w-[320px]",
-          )}
-        >
-          <span className="flex items-center gap-2.5">
-            <span className="relative flex w-5 h-5 shrink-0 items-center justify-center">
-              <Loader2
-                className={cn(
-                  "absolute w-5 h-5",
-                  isDownloading ? "animate-spin opacity-100" : "opacity-0",
-                )}
-              />
-              <span className={cn("absolute", isDownloading && "opacity-0")}>
-                <OSLogo platform={platform} />
-              </span>
-            </span>
-            <span className="min-w-[9.5rem] text-left">
-              {isDownloading ? "Downloading…" : `Download for ${osName}`}
-            </span>
-          </span>
-          <span
-            className={cn(
-              "flex shrink-0 items-center justify-center w-8 h-8 rounded-full bg-white/15 group-hover:bg-white/25",
-              isDownloading && "opacity-0",
-            )}
-          >
-            <ArrowRight className="w-4 h-4 text-white" />
-          </span>
-        </button>
+          isDownloading={isDownloading}
+          platform={platform}
+          label={isDownloading ? "Downloading…" : `Download for ${osName}`}
+          className={showPopup ? "w-full" : "mx-auto w-[320px]"}
+          size="lg"
+        />
 
         {downloadError && (
           <p className="text-xs text-red-400/90">{downloadError}</p>
@@ -88,9 +53,7 @@ export function WelcomeScreen({ showPopup = false, onClosePopup }: WelcomeScreen
           <p className="text-xs text-neutral-500">
             Not on {osName}?{" "}
             <Link
-              href={CLIENT_NODE_ACTIONS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={buildDownloadPagePath()}
               className="text-orange-400/80 hover:text-orange-400 underline underline-offset-2"
             >
               Other platforms

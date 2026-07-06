@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 interface SiteFooterProps {
   theme?: "light" | "dark";
+  className?: string;
 }
 
 const SOCIALS = [
@@ -23,7 +24,7 @@ const SOCIALS = [
   },
 ];
 
-export function SiteFooter({ theme = "dark" }: SiteFooterProps) {
+export function SiteFooter({ theme = "dark", className }: SiteFooterProps) {
   const isLight = theme === "light";
 
   return (
@@ -31,6 +32,7 @@ export function SiteFooter({ theme = "dark" }: SiteFooterProps) {
       className={cn(
         "relative px-6 sm:px-10 lg:px-14 py-10",
         isLight ? "bg-white border-t border-neutral-200" : "bg-neutral-950",
+        className,
       )}
     >
       <div

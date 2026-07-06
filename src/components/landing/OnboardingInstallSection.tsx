@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/brand/SiteFooter";
 import { OnboardingPipeline } from "./OnboardingPipeline";
 
 export function OnboardingInstallSection() {

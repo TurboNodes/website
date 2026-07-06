@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
+import type { Platform } from "@/lib/turboClientDownload";
 
 const SESSION_KEY = "turbo_onboarding_session";
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
 export type StepState = "locked" | "active" | "loading" | "complete";
+export type SupportedPlatform = Exclude<Platform, "" | "unknown">;
 
 interface SessionProgress {
   downloadComplete: boolean;
   installConfirmed: boolean;
   connectComplete: boolean;
+  downloadPlatform?: SupportedPlatform;
   savedAt: number;
 }
 
@@ -39,10 +42,22 @@ function writeSessionProgress(progress: Omit<SessionProgress, "savedAt">) {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
 }
 
+export function markOnboardingDownloadComplete(platform: SupportedPlatform) {
+  const saved = readSessionProgress();
+  writeSessionProgress({
+    downloadComplete: true,
+    installConfirmed: saved?.installConfirmed ?? false,
+    connectComplete: saved?.connectComplete ?? false,
+    downloadPlatform: platform,
+  });
+}
+
 export function useOnboardingProgress() {
   const [downloadComplete, setDownloadComplete] = useState(false);
   const [installConfirmed, setInstallConfirmed] = useState(false);
   const [connectComplete, setConnectComplete] = useState(false);
+  const [downloadPlatform, setDownloadPlatform] =
+    useState<SupportedPlatform | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -51,6 +66,7 @@ export function useOnboardingProgress() {
       setDownloadComplete(saved.downloadComplete);
       setInstallConfirmed(saved.installConfirmed);
       setConnectComplete(saved.connectComplete);
+      setDownloadPlatform(saved.downloadPlatform ?? null);
     }
     setHydrated(true);
   }, []);
@@ -61,11 +77,19 @@ export function useOnboardingProgress() {
       downloadComplete,
       installConfirmed,
       connectComplete,
+      ...(downloadPlatform ? { downloadPlatform } : {}),
     });
-  }, [hydrated, downloadComplete, installConfirmed, connectComplete]);
+  }, [
+    hydrated,
+    downloadComplete,
+    installConfirmed,
+    connectComplete,
+    downloadPlatform,
+  ]);
 
-  const markDownloadComplete = useCallback(() => {
+  const markDownloadComplete = useCallback((platform?: SupportedPlatform) => {
     setDownloadComplete(true);
+    if (platform) setDownloadPlatform(platform);
   }, []);
 
   const markInstallConfirmed = useCallback(() => {
@@ -100,6 +124,7 @@ export function useOnboardingProgress() {
     downloadComplete,
     installConfirmed,
     connectComplete,
+    downloadPlatform,
     markDownloadComplete,
     markInstallConfirmed,
     getStepState,

@@ -5,6 +5,7 @@ import { StepCheckpoint } from "./StepCheckpoint";
 import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
 import { useOnboardingTrack } from "@/hooks/useOnboardingTrack";
 import { useTurboDownload } from "@/hooks/useTurboDownload";
+import { getOSName, isSupportedPlatform } from "@/lib/turboClientDownload";
 import { cn } from "@/lib/utils";
 
 export function OnboardingPipeline() {
@@ -13,6 +14,7 @@ export function OnboardingPipeline() {
     markInstallConfirmed,
     getStepState,
     hydrated,
+    downloadPlatform,
   } = useOnboardingProgress();
 
   const { containerRef, setCircleRef, trackStyle, animateProgress } =
@@ -23,10 +25,13 @@ export function OnboardingPipeline() {
 
   const handleDownload = async () => {
     const success = await download();
-    if (success) {
-      markDownloadComplete();
+    if (success && isSupportedPlatform(platform)) {
+      markDownloadComplete(platform);
     }
   };
+
+  const selectedPlatform = downloadPlatform ?? platform;
+  const selectedOsName = downloadPlatform ? getOSName(downloadPlatform) : osName;
 
   if (!hydrated) {
     return (
@@ -75,8 +80,9 @@ export function OnboardingPipeline() {
           <div className="col-start-2 row-start-1 min-w-0">
             <DownloadStep
               state={getStepState("download")}
-              platform={platform}
-              osName={osName}
+              platform={selectedPlatform}
+              currentPlatform={platform}
+              osName={selectedOsName}
               isDownloading={isDownloading}
               isReady={isReady}
               downloadError={downloadError}
@@ -93,7 +99,7 @@ export function OnboardingPipeline() {
           <div className="col-start-2 row-start-2 min-w-0">
             <InstallStep
               state={getStepState("install")}
-              platform={platform}
+              platform={selectedPlatform}
               onConfirm={markInstallConfirmed}
             />
           </div>

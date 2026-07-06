@@ -1,16 +1,18 @@
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { StepCard } from "../StepCard";
 import { OSLogo } from "../ui/OSLogos";
+import { TurboDownloadButton } from "@/components/shared/TurboDownloadButton";
 import type { StepState } from "@/hooks/useOnboardingProgress";
 import type { Platform } from "@/hooks/useTurboDownload";
 import { cn } from "@/lib/utils";
 
-import { CLIENT_NODE_ACTIONS_URL } from "@/lib/turboClientDownload";
+import { buildDownloadPagePath } from "@/lib/turboClientDownload";
 
 interface DownloadStepProps {
   state: StepState;
   platform: Platform;
+  currentPlatform: Platform;
   osName: string;
   isDownloading: boolean;
   isReady: boolean;
@@ -35,6 +37,7 @@ function DownloadVisual({ platform }: { platform: Platform }) {
 export function DownloadStep({
   state,
   platform,
+  currentPlatform,
   osName,
   isDownloading,
   isReady,
@@ -43,6 +46,8 @@ export function DownloadStep({
 }: DownloadStepProps) {
   const isLocked = state === "locked";
   const isComplete = state === "complete";
+  const shouldUseDownloadPageForRedownload =
+    isComplete && currentPlatform !== platform;
 
   return (
     <StepCard
@@ -57,9 +62,7 @@ export function DownloadStep({
             <p className="text-neutral-500 mt-2.5 text-[11px] sm:text-xs">
               Not on {osName}?{" "}
               <Link
-                href={CLIENT_NODE_ACTIONS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={buildDownloadPagePath("onboarding")}
                 className="text-orange-400/80 hover:text-orange-400 underline underline-offset-2"
               >
                 Other platforms
@@ -71,69 +74,58 @@ export function DownloadStep({
       actions={
         isComplete ? (
           <div className="flex flex-col gap-2.5">
-            <button
-              onClick={onDownload}
-              disabled={isDownloading || !isReady}
-              className={cn(
-                "inline-flex items-center justify-center gap-2 w-full px-3 py-1.5 rounded-full",
-                "border border-neutral-700 bg-neutral-900/60 hover:bg-neutral-800/80 hover:border-neutral-600",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-                "text-xs font-medium text-neutral-300 hover:text-white transition-colors"
-              )}
-            >
-              {isDownloading ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Downloading…
-                </>
-              ) : (
-                "Download again"
-              )}
-            </button>
+            {shouldUseDownloadPageForRedownload ? (
+              <Link
+                href={buildDownloadPagePath("onboarding")}
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 w-full px-3 py-1.5 rounded-full",
+                  "border border-neutral-700 bg-neutral-900/60 hover:bg-neutral-800/80 hover:border-neutral-600",
+                  "text-xs font-medium text-neutral-300 hover:text-white transition-colors"
+                )}
+              >
+                Download again
+              </Link>
+            ) : (
+              <button
+                onClick={onDownload}
+                disabled={isDownloading || !isReady}
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 w-full px-3 py-1.5 rounded-full",
+                  "border border-neutral-700 bg-neutral-900/60 hover:bg-neutral-800/80 hover:border-neutral-600",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "text-xs font-medium text-neutral-300 hover:text-white transition-colors"
+                )}
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Downloading…
+                  </>
+                ) : (
+                  "Download again"
+                )}
+              </button>
+            )}
             <p className="text-[11px] sm:text-xs text-neutral-500 text-center">
               <Link
-                href={CLIENT_NODE_ACTIONS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={buildDownloadPagePath("onboarding")}
                 className="text-orange-400/80 hover:text-orange-400 underline underline-offset-2"
               >
-                Download on GitHub
+                Other platforms
               </Link>
-              {" "}for other platforms
             </p>
           </div>
         ) : (
           <>
-          <button
-            onClick={onDownload}
-            disabled={isDownloading || !isReady || isLocked}
-            className={cn(
-              "group w-full inline-flex items-center justify-between pl-3.5 pr-1 py-1",
-              "bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-amber-500",
-              "disabled:from-neutral-800 disabled:to-neutral-800 disabled:text-neutral-500",
-              "disabled:cursor-not-allowed rounded-full text-white font-medium text-sm",
-              "transition-all duration-200 active:scale-[0.97]",
-              "shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30"
-            )}
-          >
-            <span className="flex items-center gap-2">
-              {isDownloading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Downloading…
-                </>
-              ) : (
-                <>
-                  <OSLogo platform={platform} />
-                  Download for {osName}
-                </>
-              )}
-            </span>
-            <span className="flex items-center justify-center w-7 h-7 bg-white/15 rounded-full group-hover:bg-white/25 transition-colors">
-              <ArrowRight className="w-3.5 h-3.5 text-white" />
-            </span>
-          </button>
-          {downloadError && (
+            <TurboDownloadButton
+              onClick={onDownload}
+              disabled={!isReady || isLocked}
+              isDownloading={isDownloading}
+              platform={platform}
+              label={isDownloading ? "Downloading…" : `Download for ${osName}`}
+              size="sm"
+            />
+            {downloadError && (
             <p className="text-[11px] sm:text-xs text-red-400/90 text-center mt-2">
               {downloadError}
             </p>

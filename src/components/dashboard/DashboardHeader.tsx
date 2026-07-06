@@ -17,7 +17,7 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   return (
     <header className="relative z-10 shrink-0 flex items-center justify-between px-6 sm:px-8 py-4 border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur-md">
-      <Link href="/dashboard" className="flex items-center gap-3 group">
+      <Link href="/" className="flex items-center gap-3 group">
         <img
           src="/logo.png"
           alt="Turbo"
