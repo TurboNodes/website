@@ -80,14 +80,7 @@ export default function TurboNodeDashboard() {
   }
 
   return (
-    <DashboardShell
-      title="Turbo Node Dashboard"
-      supabaseConnected={supabaseConnected}
-      activeNodes={
-        nodeStats?.filter((node) => node.isActive && node.isConnected).length ?? 0
-      }
-      totalNodes={nodeStats?.length ?? 0}
-    >
+    <DashboardShell title="Turbo Node Dashboard">
       {loading ? (
         <div className="h-full flex items-center justify-center">
           <div className="text-center">

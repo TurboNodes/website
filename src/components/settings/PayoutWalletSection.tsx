@@ -1,10 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { base, mainnet } from "wagmi/chains";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import {
+  type Connector,
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useSwitchChain,
+} from "wagmi";
 import { AlertTriangle, Check, Copy, Loader2, Trash2, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChainSelector } from "@/components/shared/ChainSelector";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useWalletConnectors } from "@/hooks/useWalletConnectors";
 import {
   PAYOUT_CHAINS,
   REWARD_TOKEN,
@@ -15,11 +22,33 @@ import {
   type PayoutChain,
 } from "@/lib/payoutChains";
 import { SettingsPanel } from "./SettingsPanel";
+import { Web3Provider } from "@/components/providers/Web3Provider";
 
-export function PayoutWalletSection() {
+function PayoutWalletSectionFallback() {
+  return (
+    <SettingsPanel
+      label="payout_wallet"
+      title="Payout wallets"
+      description={`Link a wallet on each chain to receive ${REWARD_TOKEN}.`}
+    >
+      <div className="flex items-center gap-2 text-sm text-neutral-500">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Loading wallet options…
+      </div>
+    </SettingsPanel>
+  );
+}
+
+function PayoutWalletSectionInner() {
   const { address, isConnected, chainId } = useAccount();
-  const { connect, connectors, isPending, error: connectError } = useConnect();
-  const { disconnect } = useDisconnect();
+  const walletConnectors = useWalletConnectors();
+  const { connect, isPending, error: connectError } = useConnect();
+  const { disconnect, disconnectAsync } = useDisconnect();
+  const {
+    switchChainAsync,
+    isPending: isSwitchingChain,
+    error: switchChainError,
+  } = useSwitchChain();
   const {
     preferences,
     loading,
@@ -40,16 +69,26 @@ export function PayoutWalletSection() {
   const [copied, setCopied] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const lastAutoSaved = useRef<string | null>(null);
+  const autoSaveSuppressed = useRef(false);
 
   // Reset manual input when switching chains.
   useEffect(() => {
     setManualInput("");
     setManualError(null);
     lastAutoSaved.current = null;
+    autoSaveSuppressed.current = false;
   }, [selectedChain]);
+
+  // Allow auto-save again once the wallet session ends.
+  useEffect(() => {
+    if (!isConnected) {
+      autoSaveSuppressed.current = false;
+    }
+  }, [isConnected]);
 
   // Persist a freshly connected EVM wallet for the active chain.
   useEffect(() => {
+    if (autoSaveSuppressed.current) return;
     if (!isEvmChain || !isConnected || !address || chainId !== evmChainId) return;
     if (address === savedWallet?.address) return;
 
@@ -85,9 +124,11 @@ export function PayoutWalletSection() {
   };
 
   const handleRemove = async () => {
+    autoSaveSuppressed.current = true;
     await clearPayoutWallet(selectedChain);
-    lastAutoSaved.current = null;
-    if (isConnected && isEvmChain) disconnect();
+    if (isConnected && isEvmChain) {
+      await disconnectAsync();
+    }
     setShowRemoveConfirm(false);
   };
 
@@ -107,6 +148,28 @@ export function PayoutWalletSection() {
     await navigator.clipboard.writeText(savedWallet.address);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const walletActionPending = isPending || isSwitchingChain;
+  const needsChainSwitch =
+    isEvmChain && isConnected && chainId !== undefined && chainId !== evmChainId;
+  const isSavingConnectedWallet =
+    isEvmChain &&
+    isConnected &&
+    !!address &&
+    !savedWallet &&
+    !needsChainSwitch &&
+    saving;
+
+  const handleWalletConnect = (connector: Connector) => {
+    if (isConnected || walletActionPending) return;
+    autoSaveSuppressed.current = false;
+    connect({ connector, chainId: evmChainId });
+  };
+
+  const handleSwitchChain = () => {
+    if (!needsChainSwitch || walletActionPending) return;
+    switchChainAsync({ chainId: evmChainId });
   };
 
   return (
@@ -177,35 +240,89 @@ export function PayoutWalletSection() {
         </div>
       ) : (
         <div className="space-y-5">
-          {isEvmChain && (
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 mb-2">
-                connect a wallet
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {connectors.map((connector) => (
+          {isEvmChain && isConnected && address && (
+            <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 mb-1">
+                    connected wallet
+                  </p>
+                  <p className="font-mono text-sm text-white truncate">
+                    {truncateAddress(address)}
+                  </p>
+                  {needsChainSwitch ? (
+                    <p className="text-xs text-amber-400 mt-1">
+                      Switch to {chainConfig.chainName} to use this address for
+                      payouts.
+                    </p>
+                  ) : isSavingConnectedWallet ? (
+                    <p className="text-xs text-neutral-400 mt-1 flex items-center gap-2">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Saving payout wallet…
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                  {needsChainSwitch && (
+                    <Button
+                      onClick={handleSwitchChain}
+                      disabled={walletActionPending || saving}
+                      className="bg-orange-500 text-white hover:bg-orange-600"
+                    >
+                      {isSwitchingChain ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        `Switch to ${chainConfig.chainName}`
+                      )}
+                    </Button>
+                  )}
                   <Button
-                    key={connector.uid}
                     variant="outline"
-                    onClick={() =>
-                      connect({ connector, chainId: evmChainId })
-                    }
-                    disabled={isPending || saving}
-                    className="border-neutral-800 bg-neutral-950 text-white hover:bg-neutral-900 hover:text-orange-400"
+                    onClick={() => disconnect()}
+                    disabled={walletActionPending || saving}
+                    className="border-neutral-800 bg-neutral-950 text-neutral-300 hover:bg-neutral-900 hover:text-white"
                   >
-                    {isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Wallet className="w-4 h-4" />
-                    )}
-                    {connector.name}
+                    Disconnect
                   </Button>
-                ))}
+                </div>
               </div>
             </div>
           )}
 
-          {isEvmChain && (
+          {isEvmChain && !isConnected && (
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 mb-2">
+                connect a wallet
+              </p>
+              {walletConnectors.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {walletConnectors.map((connector) => (
+                    <Button
+                      key={connector.uid}
+                      variant="outline"
+                      onClick={() => handleWalletConnect(connector)}
+                      disabled={walletActionPending || saving}
+                      className="border-neutral-800 bg-neutral-950 text-white hover:bg-neutral-900 hover:text-orange-400"
+                    >
+                      {isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wallet className="w-4 h-4" />
+                      )}
+                      {connector.name}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-500">
+                  No browser wallet detected. Install a wallet extension or
+                  paste an address below.
+                </p>
+              )}
+            </div>
+          )}
+
+          {isEvmChain && !isConnected && walletConnectors.length > 0 && (
             <div className="relative flex items-center gap-3">
               <div className="h-px flex-1 bg-neutral-800" />
               <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-600">
@@ -246,9 +363,12 @@ export function PayoutWalletSection() {
         </div>
       )}
 
-      {(manualError || connectError || prefsError) && (
+      {(manualError || connectError || switchChainError || prefsError) && (
         <p className="mt-3 text-sm text-red-400">
-          {manualError || connectError?.message || prefsError}
+          {manualError ||
+            connectError?.message ||
+            switchChainError?.message ||
+            prefsError}
         </p>
       )}
 
@@ -326,5 +446,13 @@ export function PayoutWalletSection() {
         </div>
       )}
     </SettingsPanel>
+  );
+}
+
+export function PayoutWalletSection() {
+  return (
+    <Web3Provider fallback={<PayoutWalletSectionFallback />}>
+      <PayoutWalletSectionInner />
+    </Web3Provider>
   );
 }

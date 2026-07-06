@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Radio } from "lucide-react";
 import { UserProfile } from "../UserProfile";
 import { cn } from "@/lib/utils";
@@ -15,9 +16,14 @@ export function DashboardHeader({
   activeNodes = 0,
   totalNodes = 0,
 }: DashboardHeaderProps) {
+  const router = useRouter();
+  const logoHref = router.pathname.startsWith("/dashboard/")
+    ? "/dashboard"
+    : "/";
+
   return (
     <header className="relative z-10 shrink-0 flex items-center justify-between px-6 sm:px-8 py-4 border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur-md">
-      <Link href="/" className="flex items-center gap-3 group">
+      <Link href={logoHref} className="flex items-center gap-3 group">
         <img
           src="/logo.png"
           alt="Turbo"

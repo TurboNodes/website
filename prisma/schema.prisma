@@ -23,10 +23,19 @@ model User {
   totalEarnings Decimal  @default(0) @db.Decimal(18, 4)
   todayEarnings Decimal  @default(0) @db.Decimal(18, 4)
 
+  referralCode    String   @unique
+  referralBalance Decimal  @default(0) @db.Decimal(18, 4)
+  referredById    String?  @db.Uuid
+  referredBy      User?    @relation("UserReferrals", fields: [referredById], references: [id])
+  referralsMade   User[]   @relation("UserReferrals")
+
   createdAt DateTime @default(now())
   // updatedAt DateTime @updatedAt
 
   nodes Node[]
+  referralsAsReferrer Referral[] @relation("Referrer")
+  referralsAsReferred Referral[] @relation("Referred")
+  referralEarnings    ReferralEarning[] @relation("ReferrerEarnings")
 
   @@map("users")
 }
@@ -50,4 +59,35 @@ model Node {
   @@index([isActive])
 
   @@map("nodes")
+}
+
+model Referral {
+  id                          String   @id @default(uuid()) @db.Uuid
+  referrerId                  String   @db.Uuid
+  referredId                  String   @unique @db.Uuid
+  earningsCommissionedThrough Decimal  @default(0) @db.Decimal(18, 4)
+  milestoneBonusPaid          Boolean  @default(false)
+  createdAt                   DateTime @default(now())
+
+  referrer User @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred User @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+model ReferralEarning {
+  id                  String   @id @default(uuid()) @db.Uuid
+  referrerId          String   @db.Uuid
+  referredId          String   @db.Uuid
+  type                String   // milestone_bonus | commission
+  amount              Decimal  @db.Decimal(18, 4)
+  sourceEarningsDelta Decimal? @db.Decimal(18, 4)
+  createdAt           DateTime @default(now())
+
+  referrer User @relation("ReferrerEarnings", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@index([createdAt])
+  @@map("referral_earnings")
 }

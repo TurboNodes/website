@@ -2,7 +2,8 @@ import type { AppProps } from "next/app";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { BlogScrollRestoration } from "@/components/blog/BlogScrollRestoration";
-import { Web3Provider } from "@/components/providers/Web3Provider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SupabaseRealtimeProvider } from "@/components/providers/SupabaseRealtimeProvider";
 import "@/pages/globals.css";
 import "@/components/landing/landing-hero.css";
 
@@ -18,12 +19,14 @@ const geistMono = Geist_Mono({
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <Web3Provider>
-      <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <BlogScrollRestoration />
-        <Component {...pageProps} />
-        <Analytics />
-      </div>
-    </Web3Provider>
+    <AuthProvider>
+      <SupabaseRealtimeProvider>
+        <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <BlogScrollRestoration />
+          <Component {...pageProps} />
+          <Analytics />
+        </div>
+      </SupabaseRealtimeProvider>
+    </AuthProvider>
   );
 }
