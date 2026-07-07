@@ -9,12 +9,34 @@ import React, {
 import { useRouter } from "next/router";
 import { supabase } from "@/lib/supabase";
 import { bootstrapUserAfterAuth } from "@/lib/claimReferral";
+import { formatWeb3AuthError, WEB3_AUTH_STATEMENT } from "@/lib/web3Auth";
+import type { EthereumWallet, SolanaWallet } from "@supabase/auth-js";
 import type { Session, User } from "@supabase/supabase-js";
+import type { Hex } from "viem";
 
-function buildOAuthCallbackUrl(redirectTo?: string): string {
-  const base = `${window.location.origin}/auth/callback`;
-  if (!redirectTo) return base;
-  return `${base}?redirect=${encodeURIComponent(redirectTo)}`;
+export type Web3AuthChain = "ethereum" | "solana";
+
+interface EthereumSignInOptions {
+  wallet?: EthereumWallet;
+  message?: string;
+  signature?: Hex;
+  redirectTo?: string;
+  refCode?: string;
+}
+
+interface SolanaSignInOptions {
+  wallet?: SolanaWallet;
+  message?: string;
+  signature?: Uint8Array;
+  redirectTo?: string;
+  refCode?: string;
+}
+
+function buildOAuthCallbackUrl(redirectTo?: string, refCode?: string): string {
+  const url = new URL(`${window.location.origin}/auth/callback`);
+  if (redirectTo) url.searchParams.set("redirect", redirectTo);
+  if (refCode) url.searchParams.set("ref", refCode);
+  return url.toString();
 }
 
 export interface AuthState {
@@ -25,9 +47,14 @@ export interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-  signInWithDiscord: (redirectTo?: string) => Promise<void>;
-  signInWithGoogle: (redirectTo?: string) => Promise<void>;
+  signInWithDiscord: (redirectTo?: string, refCode?: string) => Promise<void>;
+  signInWithGoogle: (redirectTo?: string, refCode?: string) => Promise<void>;
+  signInWithWeb3Wallet: {
+    (chain: "ethereum", options?: EthereumSignInOptions): Promise<void>;
+    (chain: "solana", options?: SolanaSignInOptions): Promise<void>;
+  };
   signOut: () => Promise<void>;
+  clearAuthError: () => void;
   isAuthenticated: boolean;
 }
 
@@ -115,14 +142,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signInWithDiscord = useCallback(async (redirectTo?: string) => {
+  const signInWithDiscord = useCallback(async (redirectTo?: string, refCode?: string) => {
     setAuthState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
         options: {
-          redirectTo: buildOAuthCallbackUrl(redirectTo),
+          redirectTo: buildOAuthCallbackUrl(redirectTo, refCode),
         },
       });
 
@@ -144,14 +171,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signInWithGoogle = useCallback(async (redirectTo?: string) => {
+  const signInWithGoogle = useCallback(async (redirectTo?: string, refCode?: string) => {
     setAuthState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: buildOAuthCallbackUrl(redirectTo),
+          redirectTo: buildOAuthCallbackUrl(redirectTo, refCode),
         },
       });
 
@@ -171,6 +198,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: false,
       }));
     }
+  }, []);
+
+  const signInWithWeb3Wallet = useCallback(
+    async (
+      chain: Web3AuthChain,
+      options?: EthereumSignInOptions | SolanaSignInOptions,
+    ) => {
+      // Web3 flows can involve multiple wallet prompts (connect + sign). We avoid
+      // toggling the global `loading` flag here because it replaces the entire
+      // auth UI with a spinner. Instead, the calling component shows a local
+      // pending state for the clicked wallet option.
+      setAuthState((prev) => ({ ...prev, error: null }));
+
+      try {
+        const ethereumOptions =
+          chain === "ethereum" ? (options as EthereumSignInOptions | undefined) : undefined;
+        const solanaOptions =
+          chain === "solana" ? (options as SolanaSignInOptions | undefined) : undefined;
+
+        const { data, error } =
+          chain === "ethereum"
+            ? await supabase.auth.signInWithWeb3(
+                ethereumOptions?.message && ethereumOptions.signature
+                  ? {
+                      chain: "ethereum",
+                      message: ethereumOptions.message,
+                      signature: ethereumOptions.signature,
+                    }
+                  : {
+                      chain: "ethereum",
+                      statement: WEB3_AUTH_STATEMENT,
+                      ...(ethereumOptions?.wallet
+                        ? { wallet: ethereumOptions.wallet as EthereumWallet }
+                        : {}),
+                      options: {
+                        url: window.location.href,
+                      },
+                    },
+              )
+            : await supabase.auth.signInWithWeb3(
+                solanaOptions?.message && solanaOptions.signature
+                  ? {
+                      chain: "solana",
+                      message: solanaOptions.message,
+                      signature: solanaOptions.signature,
+                    }
+                  : {
+                      chain: "solana",
+                      statement: WEB3_AUTH_STATEMENT,
+                      ...(solanaOptions?.wallet
+                        ? { wallet: solanaOptions.wallet as SolanaWallet }
+                        : {}),
+                      options: {
+                        url: window.location.href,
+                      },
+                    },
+              );
+
+        if (error) {
+          console.error(`${chain} wallet sign-in error:`, error);
+          throw new Error(
+            formatWeb3AuthError(error, `Failed to sign in with ${chain} wallet.`),
+          );
+        }
+
+        if (data.session) {
+          await bootstrapUserAfterAuth(data.session, options?.refCode);
+
+          if (options?.redirectTo) {
+            router.push(options.redirectTo);
+          }
+        }
+      } catch (err) {
+        console.error(`Unexpected error during ${chain} wallet sign-in:`, err);
+        throw new Error(
+          formatWeb3AuthError(err, `Failed to sign in with ${chain} wallet.`),
+        );
+      }
+    },
+    [router],
+  );
+
+  const clearAuthError = useCallback(() => {
+    setAuthState((prev) => ({ ...prev, error: null }));
   }, []);
 
   const signOut = useCallback(async () => {
@@ -223,10 +334,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...authState,
       signInWithDiscord,
       signInWithGoogle,
+      signInWithWeb3Wallet,
       signOut,
+      clearAuthError,
       isAuthenticated: !!authState.user,
     }),
-    [authState, signInWithDiscord, signInWithGoogle, signOut],
+    [
+      authState,
+      signInWithDiscord,
+      signInWithGoogle,
+      signInWithWeb3Wallet,
+      signOut,
+      clearAuthError,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

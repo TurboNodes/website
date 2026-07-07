@@ -2,6 +2,12 @@ import React from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { SettingsPanel } from "./SettingsPanel";
+import {
+  getAuthDisplayName,
+  getAuthDisplaySubtitle,
+  getWeb3WalletAddress,
+  isWeb3User,
+} from "@/lib/web3Auth";
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -19,11 +25,9 @@ export function AccountSection() {
 
   const avatarUrl =
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
-  const displayName =
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
-    user?.email?.split("@")[0] ||
-    "User";
+  const displayName = getAuthDisplayName(user);
+  const displaySubtitle = getAuthDisplaySubtitle(user);
+  const walletAddress = getWeb3WalletAddress(user);
   const initials = displayName
     .split(" ")
     .map((n: string) => n[0])
@@ -53,13 +57,18 @@ export function AccountSection() {
         </Avatar>
         <div>
           <p className="font-medium text-white">{displayName}</p>
-          <p className="text-sm text-neutral-500">{user?.email}</p>
+          {displaySubtitle && (
+            <p className="text-sm text-neutral-500">{displaySubtitle}</p>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="display_name" value={displayName} />
-        <Field label="email" value={user?.email ?? "—"} />
+        <Field
+          label={isWeb3User(user) ? "wallet_address" : "email"}
+          value={isWeb3User(user) ? (walletAddress ?? "—") : (user?.email ?? "—")}
+        />
         <Field label="member_since" value={memberSince} />
         <Field label="role" value="node_operator" />
       </div>

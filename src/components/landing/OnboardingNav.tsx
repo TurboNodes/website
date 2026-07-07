@@ -31,15 +31,15 @@ export function OnboardingNav({
             : "bg-white/60 border-neutral-200/80 shadow-neutral-900/5",
         )}
       >
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
+        <Link href="/" className="flex items-center gap-1 group shrink-0">
           <img
             src="/logo.png"
             alt="Turbo"
-            className="h-9 w-9 transition-transform group-hover:scale-105"
+            className="h-9 w-9"
           />
           <span
             className={cn(
-              "text-sm font-semibold tracking-tight leading-none",
+              "font-brand text-sm tracking-[0.035em] leading-none",
               isDark ? "text-white" : "text-neutral-900",
             )}
           >

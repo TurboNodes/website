@@ -43,6 +43,7 @@ model User {
 model Node {
   id          String   @id @db.Uuid
   isActive    Boolean  @default(true)
+  nodeIp      String?  @unique @map("nodeIp")
   
   // Structure: { "2024-01-15": 25.50, "2024-01-16": 30.25, ... }
   dailyEarnings Json     @default("{}") @db.JsonB

@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getCookieValue, getSupabaseAsUser, getUserFromRequest } from "@/lib/apiAuth";
-import { REFERRAL_COOKIE_NAME } from "@/lib/referrals";
+import { getSupabaseAsUser, getUserFromRequest } from "@/lib/apiAuth";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -13,9 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: authError ?? "Unauthorized" });
   }
 
-  const refCode =
-    getCookieValue(req, REFERRAL_COOKIE_NAME) ||
-    (typeof req.body?.refCode === "string" ? req.body.refCode.trim() : null);
+  const refCode = typeof req.body?.refCode === "string" ? req.body.refCode.trim() : null;
 
   if (!refCode) {
     return res.status(200).json({ ok: true, attributed: false, reason: "no_ref_code" });

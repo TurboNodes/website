@@ -16,6 +16,7 @@ import { getAllPostSlugs, getPostData, getRelatedPosts, BlogPost, BlogPostMeta }
 
 // Import highlight.js CSS for code syntax highlighting
 import 'highlight.js/styles/github.css';
+import 'katex/dist/katex.min.css';
 import Layout from '@/components/Layout';
 
 interface BlogPostPageProps {

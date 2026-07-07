@@ -1,6 +1,13 @@
-import { useAuth } from '@/hooks/useAuth';
-import { Loader2, LogOut, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2, LogOut, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { WalletAuthButtons } from "@/components/auth/WalletAuthButtons";
+import { getAuthDisplayName, getAuthDisplaySubtitle } from "@/lib/web3Auth";
+import type { ReferralValidationReason } from "@/lib/referralValidation";
+import { isValidReferralCode, normalizeReferralCode } from "@/lib/referrals";
+
+type ReferralCheckStatus = "idle" | "checking" | ReferralValidationReason;
 
 interface AuthButtonsProps {
   className?: string;
@@ -8,10 +15,110 @@ interface AuthButtonsProps {
   layout?: 'row' | 'column';
   /** Path to redirect to after OAuth completes */
   redirectTo?: string;
+  /** Show a referral code input below providers (signup) */
+  showReferralInput?: boolean;
+  /** Pre-fill the referral input without persisting it */
+  prefillReferralCode?: string | null;
 }
 
-export function AuthButtons({ className = '', layout = 'row', redirectTo }: AuthButtonsProps) {
+async function fetchReferralValidation(code: string): Promise<ReferralValidationReason> {
+  const normalized = normalizeReferralCode(code);
+  if (!isValidReferralCode(normalized)) return "invalid_format";
+
+  try {
+    const response = await fetch(`/api/referrals/validate?code=${encodeURIComponent(normalized)}`);
+    if (!response.ok) return "not_found";
+
+    const result = (await response.json()) as { valid: boolean; reason: ReferralValidationReason };
+    return result.valid ? "ok" : result.reason;
+  } catch {
+    return "not_found";
+  }
+}
+
+export function AuthButtons({
+  className = "",
+  layout = "row",
+  redirectTo,
+  showReferralInput = false,
+  prefillReferralCode = null,
+}: AuthButtonsProps) {
   const { user, loading, signInWithDiscord, signInWithGoogle, signOut, isAuthenticated } = useAuth();
+  const [referralDraft, setReferralDraft] = useState<string>("");
+  const [referralCheckStatus, setReferralCheckStatus] = useState<ReferralCheckStatus>("idle");
+
+  const normalizedDraft = normalizeReferralCode(referralDraft);
+
+  useEffect(() => {
+    if (!prefillReferralCode) return;
+    setReferralDraft(prefillReferralCode);
+    setReferralCheckStatus("ok");
+  }, [prefillReferralCode]);
+
+  const resolveReferralStatus = useCallback(async (): Promise<ReferralCheckStatus> => {
+    const trimmed = referralDraft.trim();
+    if (!trimmed) return "idle";
+
+    setReferralCheckStatus("checking");
+    const status = await fetchReferralValidation(trimmed);
+    setReferralCheckStatus(status);
+    return status;
+  }, [referralDraft]);
+
+  useEffect(() => {
+    if (!showReferralInput) return;
+
+    const trimmed = referralDraft.trim();
+    if (!trimmed) {
+      setReferralCheckStatus("idle");
+      return;
+    }
+
+    const normalized = normalizeReferralCode(trimmed);
+    if (!isValidReferralCode(normalized)) {
+      setReferralCheckStatus("invalid_format");
+      return;
+    }
+
+    setReferralCheckStatus("checking");
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void fetch(`/api/referrals/validate?code=${encodeURIComponent(normalized)}`, {
+        signal: controller.signal,
+      })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((result: { valid: boolean; reason: ReferralValidationReason } | null) => {
+          if (!result) {
+            setReferralCheckStatus("not_found");
+            return;
+          }
+          setReferralCheckStatus(result.valid ? "ok" : result.reason);
+        })
+        .catch((err: Error) => {
+          if (err.name !== "AbortError") setReferralCheckStatus("not_found");
+        });
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [referralDraft, showReferralInput]);
+
+  const getReferralCodeForSignup = useCallback(async (): Promise<string | null> => {
+    if (!referralDraft.trim()) return null;
+
+    const status =
+      referralCheckStatus === "ok" && normalizedDraft === normalizeReferralCode(referralDraft)
+        ? "ok"
+        : await resolveReferralStatus();
+
+    return status === "ok" ? normalizedDraft : null;
+  }, [referralDraft, referralCheckStatus, normalizedDraft, resolveReferralStatus]);
+
+  const signInWithReferral = (signIn: (redirectTo?: string, refCode?: string) => void) => {
+    void getReferralCodeForSignup().then((refCode) => signIn(redirectTo, refCode ?? undefined));
+  };
 
   if (loading) {
     return (
@@ -23,6 +130,9 @@ export function AuthButtons({ className = '', layout = 'row', redirectTo }: Auth
   }
 
   if (isAuthenticated && user) {
+    const displayName = getAuthDisplayName(user);
+    const displaySubtitle = getAuthDisplaySubtitle(user);
+
     return (
       <div className={cn('flex items-center gap-3', className)}>
         <div className="flex items-center gap-2">
@@ -38,10 +148,10 @@ export function AuthButtons({ className = '', layout = 'row', redirectTo }: Auth
             )}
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-medium text-white">
-              {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
-            </p>
-            <p className="text-xs text-neutral-500">{user.email}</p>
+            <p className="text-sm font-medium text-white">{displayName}</p>
+            {displaySubtitle && (
+              <p className="text-xs text-neutral-500">{displaySubtitle}</p>
+            )}
           </div>
         </div>
         <button
@@ -55,16 +165,58 @@ export function AuthButtons({ className = '', layout = 'row', redirectTo }: Auth
     );
   }
 
-  return (
-    <div
-      className={cn(
-        'flex gap-3',
-        layout === 'column' ? 'flex-col w-full' : 'flex-row items-center',
-        className,
+  const referralHasError =
+    referralDraft.trim().length > 0 &&
+    (referralCheckStatus === "invalid_format" || referralCheckStatus === "not_found");
+
+  const referralInput = showReferralInput ? (
+    <div className={cn("w-full", layout !== "column" && "min-w-[16rem]")}>
+      <label className="block text-[10px] font-mono uppercase tracking-widest text-neutral-500 mb-2 pt-4">
+        referral_code (optional)
+      </label>
+      <div className="relative">
+        <input
+          value={referralDraft}
+          onChange={(e) => setReferralDraft(e.target.value)}
+          placeholder="ABC123"
+          inputMode="text"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+          className={cn(
+            "w-full rounded-xl border bg-neutral-950/60 px-4 py-3 text-sm font-mono tracking-widest text-neutral-100 outline-none transition-colors",
+            referralHasError
+              ? "border-red-500/60 focus:border-red-500/60"
+              : referralCheckStatus === "ok"
+                ? "border-emerald-500/40 focus:border-emerald-500/60"
+                : "border-neutral-800 focus:border-neutral-700",
+          )}
+        />
+        {referralCheckStatus === "checking" && (
+          <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 animate-spin" />
+        )}
+      </div>
+      {(referralCheckStatus === "checking" || referralCheckStatus === "ok" || referralHasError) && (
+        <p
+          className={cn(
+            "mt-2 text-[11px]",
+            referralHasError ? "text-red-400" : "text-neutral-600",
+          )}
+        >
+          {referralCheckStatus === "checking"
+            ? "Checking referral code…"
+            : referralCheckStatus === "ok"
+              ? "Referral code verified — we’ll apply it when you create your account."
+              : "Invalid code."}
+        </p>
       )}
-    >
+    </div>
+  ) : null;
+
+  const providerButtons = (
+    <>
       <button
-        onClick={() => signInWithDiscord(redirectTo)}
+        onClick={() => signInWithReferral(signInWithDiscord)}
         className={cn(
           'flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 active:scale-[0.97]',
           'bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-lg shadow-[#5865F2]/20',
@@ -77,7 +229,7 @@ export function AuthButtons({ className = '', layout = 'row', redirectTo }: Auth
         Continue with Discord
       </button>
       <button
-        onClick={() => signInWithGoogle(redirectTo)}
+        onClick={() => signInWithReferral(signInWithGoogle)}
         className={cn(
           'flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 active:scale-[0.97]',
           'bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-200',
@@ -92,6 +244,31 @@ export function AuthButtons({ className = '', layout = 'row', redirectTo }: Auth
         </svg>
         Continue with Google
       </button>
+      <WalletAuthButtons
+        layout={layout}
+        redirectTo={redirectTo}
+        onBeforeAuth={getReferralCodeForSignup}
+      />
+    </>
+  );
+
+  const providerLayoutClass = cn(
+    'flex gap-3',
+    layout === 'column' ? 'flex-col w-full' : 'flex-row flex-wrap items-center',
+  );
+
+  if (showReferralInput) {
+    return (
+      <div className={cn(providerLayoutClass, className)}>
+        {providerButtons}
+        {referralInput}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn(providerLayoutClass, className)}>
+      {providerButtons}
     </div>
   );
 }

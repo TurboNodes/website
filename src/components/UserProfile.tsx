@@ -18,6 +18,7 @@ import { buildReferralLink } from "@/lib/referrals";
 import { supabase } from "@/lib/supabase";
 
 import { formatUsdcOnChain, getPrimaryPayoutWallet, truncateAddress } from "@/lib/payoutChains";
+import { getAuthDisplayName } from "@/lib/web3Auth";
 
 export function UserProfile() {
   const { user, signOut } = useAuth();
@@ -28,11 +29,7 @@ export function UserProfile() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
-  const displayName =
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
-    user?.email?.split("@")[0] ||
-    "User";
+  const displayName = getAuthDisplayName(user);
   const initials = displayName
     .split(" ")
     .map((n: string) => n[0])

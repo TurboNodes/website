@@ -1,6 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { clearStoredReferralCode, getStoredReferralCode } from "@/lib/referrals";
+import { isValidReferralCode, normalizeReferralCode } from "@/lib/referrals";
 
 export interface ClaimReferralResult {
   ok: boolean;
@@ -10,11 +10,14 @@ export interface ClaimReferralResult {
 
 export async function claimReferralForSession(
   session: Session | null,
+  refCode?: string | null,
 ): Promise<ClaimReferralResult | null> {
   if (!session?.access_token) return null;
 
-  const refCode = getStoredReferralCode();
-  if (!refCode) {
+  const normalized =
+    refCode && isValidReferralCode(refCode) ? normalizeReferralCode(refCode) : null;
+
+  if (!normalized) {
     return { ok: true, attributed: false, reason: "no_ref_code" };
   }
 
@@ -25,7 +28,7 @@ export async function claimReferralForSession(
         Authorization: `Bearer ${session.access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ refCode }),
+      body: JSON.stringify({ refCode: normalized }),
     });
 
     if (!response.ok) {
@@ -33,20 +36,17 @@ export async function claimReferralForSession(
       return null;
     }
 
-    const result = (await response.json()) as ClaimReferralResult;
-
-    if (result.attributed) {
-      clearStoredReferralCode();
-    }
-
-    return result;
+    return (await response.json()) as ClaimReferralResult;
   } catch (err) {
     console.error("Error claiming referral:", err);
     return null;
   }
 }
 
-export async function bootstrapUserAfterAuth(session: Session | null): Promise<void> {
+export async function bootstrapUserAfterAuth(
+  session: Session | null,
+  refCode?: string | null,
+): Promise<void> {
   if (!session?.user) return;
 
   try {
@@ -70,5 +70,5 @@ export async function bootstrapUserAfterAuth(session: Session | null): Promise<v
     console.error("Unexpected error upserting user row:", err);
   }
 
-  await claimReferralForSession(session);
+  await claimReferralForSession(session, refCode);
 }
