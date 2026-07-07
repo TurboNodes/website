@@ -73,7 +73,7 @@ export function NodeExplainer() {
         <div className="order-1 lg:order-2 relative">
           <div className="relative rounded-2xl overflow-hidden border border-neutral-800 shadow-2xl shadow-black/50">
             <img
-              src="/hero-sunset.jpg"
+              src="/hero-powerlines.jpg"
               alt="Network infrastructure at sunset"
               className="w-full aspect-[4/3] object-cover"
             />

@@ -23,10 +23,11 @@ export default function AuthCallback() {
           return;
         }
 
-        const { redirect } = router.query;
+        const { redirect, ref } = router.query;
+        const refCode = typeof ref === "string" ? ref : undefined;
 
         if (data.session) {
-          await bootstrapUserAfterAuth(data.session);
+          await bootstrapUserAfterAuth(data.session, refCode);
 
           if (redirect && typeof redirect === 'string') {
             const isInternalRedirect = !redirect.startsWith('http://') && !redirect.startsWith('https://');

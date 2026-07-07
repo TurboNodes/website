@@ -1,5 +1,6 @@
 import type { GetServerSideProps } from "next";
-import { getReferralCookieHeaderValue, isValidReferralCode, normalizeReferralCode } from "@/lib/referrals";
+import { redirectToJoinWithReferral } from "@/lib/joinReferral";
+import { isValidReferralCode } from "@/lib/referrals";
 
 export default function ReferralRedirect() {
   return null;
@@ -11,14 +12,5 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     return { redirect: { destination: "/join", permanent: false } };
   }
 
-  const referralCode = normalizeReferralCode(code);
-
-  context.res.setHeader("Set-Cookie", getReferralCookieHeaderValue(referralCode));
-
-  return {
-    redirect: {
-      destination: `/join?ref=${encodeURIComponent(referralCode)}`,
-      permanent: false,
-    },
-  };
+  return redirectToJoinWithReferral(context, code);
 };

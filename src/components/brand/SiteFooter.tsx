@@ -44,15 +44,15 @@ export function SiteFooter({ theme = "dark", className }: SiteFooterProps) {
 
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-1 group">
             <img
               src="/logo.png"
               alt="Turbo"
-              className="h-9 w-9 transition-transform group-hover:scale-105"
+              className="h-9 w-9"
             />
             <span
               className={cn(
-                "text-sm font-semibold tracking-tight",
+                "font-brand text-sm tracking-[0.035em] leading-none",
                 isLight ? "text-neutral-900" : "text-white",
               )}
             >

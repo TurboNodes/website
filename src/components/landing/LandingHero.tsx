@@ -9,7 +9,7 @@ export function LandingHero() {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/hero-powerlines.jpg"
+        src="/ai-sunset.png"
         alt=""
         fetchPriority="high"
         decoding="async"

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AuthButtons } from "@/components/AuthButtons";
 import { AuthCard } from "@/components/brand/AuthShell";
 
@@ -28,6 +29,15 @@ export function LoginCard({
       </h1>
       <p className="text-sm text-neutral-400 mb-8 leading-relaxed">{description}</p>
       <AuthButtons layout="column" redirectTo={redirectTo} />
+      <p className="text-sm text-neutral-500 text-center mt-6">
+        Don&apos;t have an account?{" "}
+        <Link
+          href="/join"
+          className="text-orange-400/80 hover:text-orange-400 underline underline-offset-2"
+        >
+          Sign up
+        </Link>
+      </p>
     </AuthCard>
   );
 }

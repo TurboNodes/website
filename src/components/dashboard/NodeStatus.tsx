@@ -53,9 +53,6 @@ export function NodeStatus({ nodeStats, isConnected }: NodeStatusProps) {
             Download client
             <ArrowRight className="w-4 h-4" />
           </Link>
-          <span className="mt-4 inline-block text-[11px] font-mono text-neutral-500 border border-neutral-800 bg-neutral-950/50 px-3 py-1 rounded-full">
-            offline
-          </span>
         </div>
       </div>
     );

@@ -8,6 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-brand: "Bitstream Iowan Old Style Bold BT", Georgia, serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -185,20 +186,28 @@
   }
 
   .prose-blog ul {
-    @apply list-disc list-inside space-y-2 mb-6 text-neutral-600;
+    @apply list-disc list-outside pl-6 space-y-2 mb-6 text-neutral-600;
   }
 
   .prose-blog ol {
-    @apply list-decimal list-inside space-y-2 mb-6 text-neutral-600;
+    @apply list-decimal list-outside pl-6 space-y-2 mb-6 text-neutral-600;
   }
 
   .prose-blog li {
     @apply leading-7;
   }
 
+  .prose-blog li > p {
+    @apply mb-0;
+  }
+
+  .prose-blog li > p + p {
+    @apply mt-3 mb-0;
+  }
+
   .prose-blog li > ul,
   .prose-blog li > ol {
-    @apply mt-2 mb-0 ml-6;
+    @apply mt-2 mb-0 ml-0;
   }
 
   .prose-blog blockquote {
@@ -254,6 +263,19 @@
 
   .prose-blog hr {
     @apply border-neutral-200 my-12;
+  }
+
+  .prose-blog .katex-display {
+    @apply my-8 overflow-x-auto overflow-y-hidden py-2;
+  }
+
+  .prose-blog .katex {
+    @apply text-neutral-800;
+    font-size: 1.05em;
+  }
+
+  .prose-blog .katex-display > .katex {
+    font-size: 1.15em;
   }
 
   .prose-blog img {

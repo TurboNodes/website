@@ -158,7 +158,7 @@ export function LandingFooter({ scrollContainerRef }: LandingFooterProps) {
               transform: `translateY(calc(var(--footer-p) * -${LOCKUP_LIFT_REM}rem))`,
             }}
           >
-            <div className="flex flex-row items-center gap-[calc(0.375rem+var(--footer-p)*0.125rem)]">
+            <div className="flex flex-row items-center gap-[calc(0.125rem+var(--footer-p)*0.125rem)]">
               <span
                 className="inline-flex shrink-0 will-change-transform"
                 style={{

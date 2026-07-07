@@ -13,7 +13,9 @@ const projectRoot = path.resolve(__dirname, "..");
 const useWebpack = process.argv.includes("--webpack");
 const bundler = useWebpack ? "webpack" : "turbo";
 const distDirName = useWebpack ? ".next-webpack" : ".next";
+const alternateDistDirName = useWebpack ? ".next" : ".next-webpack";
 const nextDir = path.join(projectRoot, distDirName);
+const alternateNextDir = path.join(projectRoot, alternateDistDirName);
 const nextArgs = [
   "dev",
   ...(useWebpack ? [] : ["--turbo"]),
@@ -64,15 +66,15 @@ function isProductionBuild() {
   return existsSync(path.join(nextDir, "BUILD_ID"));
 }
 
-function hasCorruptedJsonManifests({ log = false } = {}) {
+function hasCorruptedJsonManifests({ log = false, dir = nextDir, label = distDirName } = {}) {
   for (const rel of JSON_MANIFESTS) {
-    const file = path.join(nextDir, rel);
+    const file = path.join(dir, rel);
     if (!existsSync(file)) continue;
 
     try {
       JSON.parse(readFileSync(file, "utf8"));
     } catch {
-      if (log) console.log(`Corrupted ${distDirName}/${rel}, clearing cache…`);
+      if (log) console.log(`Corrupted ${label}/${rel}, clearing cache…`);
       return true;
     }
   }
@@ -134,7 +136,22 @@ function shouldCleanNext() {
 }
 
 function cleanNext() {
-  rmSync(nextDir, { recursive: true, force: true });
+  for (const dir of [nextDir, alternateNextDir]) {
+    if (existsSync(dir)) {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+}
+
+function shouldCleanAlternateNext() {
+  if (!existsSync(alternateNextDir)) return false;
+
+  if (existsSync(path.join(alternateNextDir, "BUILD_ID"))) {
+    console.log(`Found production build in ${alternateDistDirName}, clearing before dev…`);
+    return true;
+  }
+
+  return hasCorruptedJsonManifests({ log: true, dir: alternateNextDir, label: alternateDistDirName });
 }
 
 function matchesCorruptionOutput(text) {
@@ -234,7 +251,7 @@ function startDev(restartCount = 0) {
   });
 }
 
-if (shouldCleanNext()) {
+if (shouldCleanNext() || shouldCleanAlternateNext()) {
   cleanNext();
 }
 
