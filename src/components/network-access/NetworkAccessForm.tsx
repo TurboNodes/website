@@ -172,7 +172,7 @@ export function NetworkAccessForm() {
             onChange={(e) => update("volume", e.target.value)}
             className={styles.input}
           >
-            <option value="">Select volume</option>
+            <option value="" disabled>Select volume</option>
             {VOLUME_OPTIONS.map((option) => (
               <option key={option} value={option}>
                 {option}

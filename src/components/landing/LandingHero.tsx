@@ -5,7 +5,7 @@ export function LandingHero() {
   return (
     <section
       id="hero"
-      className="relative min-h-dvh flex flex-col overflow-hidden bg-neutral-950"
+      className="relative h-dvh flex flex-col overflow-hidden bg-neutral-950"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
