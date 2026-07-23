@@ -38,12 +38,15 @@ interface WalletAuthButtonsProps {
   className?: string;
   layout?: "row" | "column";
   redirectTo?: string;
+  /** Resolve an optional referral code immediately before wallet auth completes */
+  onBeforeAuth?: () => Promise<string | null>;
 }
 
 function WalletAuthButtonsInner({
   className = "",
   layout = "column",
   redirectTo,
+  onBeforeAuth,
 }: WalletAuthButtonsProps) {
   const { signInWithWeb3Wallet, loading: authLoading, clearAuthError } = useAuth();
   const { connectAsync } = useConnect();
@@ -116,10 +119,13 @@ function WalletAuthButtonsInner({
       );
 
       if (attempt !== attemptRef.current) return;
+      const refCode = (await onBeforeAuth?.()) ?? undefined;
+      if (attempt !== attemptRef.current) return;
       await signInWithWeb3Wallet("ethereum", {
         message,
         signature,
         redirectTo,
+        refCode,
       });
       if (attempt !== attemptRef.current) return;
       setOpen(false);
@@ -159,10 +165,14 @@ function WalletAuthButtonsInner({
 
       if (attempt !== attemptRef.current) return;
 
+      const refCode = (await onBeforeAuth?.()) ?? undefined;
+      if (attempt !== attemptRef.current) return;
+
       await signInWithWeb3Wallet("solana", {
         message,
         signature,
         redirectTo,
+        refCode,
       });
 
       if (attempt !== attemptRef.current) return;

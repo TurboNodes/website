@@ -42,18 +42,18 @@ export function OnboardingPipeline() {
   }
 
   return (
-    <div className="relative z-10 flex flex-1 items-start justify-center w-full px-6 sm:px-10 pt-24 sm:pt-28 pb-12">
+    <div className="relative z-10 flex flex-1 items-center justify-center w-full min-h-0 px-4 sm:px-8 lg:px-10 pt-16 sm:pt-24 pb-6 sm:pb-10">
       <div className="w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl mx-auto">
-        <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-10">
+        <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-4 sm:mb-8">
           // setup
         </p>
         <div
           ref={containerRef}
-          className="relative grid grid-cols-[2.25rem_1fr] sm:grid-cols-[2.5rem_1fr] gap-x-3 sm:gap-x-4 gap-y-4 sm:gap-y-5"
+          className="relative grid grid-cols-[1.75rem_1fr] sm:grid-cols-[2.5rem_1fr] gap-x-2 sm:gap-x-4 gap-y-2.5 sm:gap-y-4"
         >
           {trackStyle && (
             <div
-              className="pointer-events-none absolute left-0 w-9 sm:w-10 z-0"
+              className="pointer-events-none absolute left-0 w-7 sm:w-10 z-0"
               style={{ top: trackStyle.top, height: trackStyle.height }}
               aria-hidden
             >
