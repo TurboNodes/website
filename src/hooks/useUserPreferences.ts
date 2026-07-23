@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import type { ChainWallet, PayoutChain, PayoutPreferences } from "@/lib/payoutChains";
 import { getPayoutWallets } from "@/lib/payoutChains";
+import {
+  getWeb3AuthPayoutChain,
+  getWeb3WalletAddress,
+  isWeb3User,
+} from "@/lib/web3Auth";
 
 export interface UserPreferences extends PayoutPreferences {
   [key: string]: unknown;
@@ -14,6 +19,7 @@ export function useUserPreferences() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pairingAttempted = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -52,6 +58,49 @@ export function useUserPreferences() {
       mounted = false;
     };
   }, [user?.id, isAuthenticated]);
+
+  useEffect(() => {
+    if (loading || pairingAttempted.current || !user || !isWeb3User(user)) return;
+
+    const chain = getWeb3AuthPayoutChain(user);
+    const address = getWeb3WalletAddress(user);
+    if (!chain || !address) return;
+
+    const wallets = getPayoutWallets(preferences);
+    if (wallets[chain]) return;
+
+    pairingAttempted.current = true;
+
+    const next: PayoutPreferences = {
+      ...preferences,
+      payoutWallets: {
+        ...wallets,
+        [chain]: {
+          address,
+          source: "connected",
+          linkedAt: new Date().toISOString(),
+        },
+      },
+      payoutWallet: undefined,
+      walletSource: undefined,
+      walletLinkedAt: undefined,
+    };
+
+    void (async () => {
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ preferences: next })
+        .eq("id", user.id);
+
+      if (updateError) {
+        console.error("Error pairing Web3 auth wallet as payout wallet:", updateError);
+        pairingAttempted.current = false;
+        return;
+      }
+
+      setPreferences(next);
+    })();
+  }, [loading, preferences, user]);
 
   const updatePreferences = useCallback(
     async (partial: Partial<UserPreferences>) => {

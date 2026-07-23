@@ -1,6 +1,12 @@
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { isValidReferralCode, normalizeReferralCode } from "@/lib/referrals";
+import { getPayoutWallets, type PayoutPreferences } from "@/lib/payoutChains";
+import {
+  getWeb3AuthPayoutChain,
+  getWeb3WalletAddress,
+  isWeb3User,
+} from "@/lib/web3Auth";
 
 export interface ClaimReferralResult {
   ok: boolean;
@@ -70,5 +76,57 @@ export async function bootstrapUserAfterAuth(
     console.error("Unexpected error upserting user row:", err);
   }
 
+  await pairWeb3AuthPayoutWallet(session);
   await claimReferralForSession(session, refCode);
+}
+
+async function pairWeb3AuthPayoutWallet(session: Session | null): Promise<void> {
+  if (!session?.user || !isWeb3User(session.user)) return;
+
+  const chain = getWeb3AuthPayoutChain(session.user);
+  const address = getWeb3WalletAddress(session.user);
+  if (!chain || !address) return;
+
+  try {
+    const { data, error: fetchError } = await supabase
+      .from("users")
+      .select("preferences")
+      .eq("id", session.user.id)
+      .single();
+
+    if (fetchError) {
+      console.error("Error loading preferences for Web3 payout pairing:", fetchError);
+      return;
+    }
+
+    const preferences = (data?.preferences as PayoutPreferences | null) ?? {};
+    const wallets = getPayoutWallets(preferences);
+    if (wallets[chain]) return;
+
+    const next: PayoutPreferences = {
+      ...preferences,
+      payoutWallets: {
+        ...wallets,
+        [chain]: {
+          address,
+          source: "connected",
+          linkedAt: new Date().toISOString(),
+        },
+      },
+      payoutWallet: undefined,
+      walletSource: undefined,
+      walletLinkedAt: undefined,
+    };
+
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ preferences: next })
+      .eq("id", session.user.id);
+
+    if (updateError) {
+      console.error("Error pairing Web3 auth wallet as payout wallet:", updateError);
+    }
+  } catch (err) {
+    console.error("Unexpected error pairing Web3 auth payout wallet:", err);
+  }
 }
