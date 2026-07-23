@@ -9,7 +9,7 @@ export function LandingHero() {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/ai-sunset.png"
+        src="/ChatGPT Image Jul 8, 2026, 10_24_57 AM.png"
         alt=""
         fetchPriority="high"
         decoding="async"

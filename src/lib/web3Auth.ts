@@ -3,7 +3,7 @@ import type { EthereumWallet } from "@supabase/auth-js";
 import type { Connector } from "wagmi";
 import { getAddress, UserRejectedRequestError, type Hex } from "viem";
 import { mainnet } from "wagmi/chains";
-import { truncateAddress } from "@/lib/payoutChains";
+import { truncateAddress, type PayoutChain } from "@/lib/payoutChains";
 
 export const WEB3_AUTH_STATEMENT =
   "I accept the Turbo Terms of Service at https://turbo.network";
@@ -380,14 +380,24 @@ export async function authenticateWithEthereumConnector(
 }
 
 
+function isWeb3IdentityProvider(provider: string | undefined): boolean {
+  return provider === "web3" || provider === "ethereum" || provider === "solana";
+}
+
+/** Strip Supabase Web3 identity prefixes like `web3:ethereum:0x…`. */
+export function normalizeWeb3IdentityAddress(raw: string): string {
+  const trimmed = raw.trim();
+  const prefixed = /^web3:(ethereum|solana):(.+)$/i.exec(trimmed);
+  if (prefixed) return prefixed[2];
+
+  return trimmed;
+}
+
 export function getWeb3WalletAddress(user: User | null | undefined): string | null {
   if (!user) return null;
 
-  const web3Identity = user.identities?.find(
-    (identity) =>
-      identity.provider === "web3" ||
-      identity.provider === "ethereum" ||
-      identity.provider === "solana",
+  const web3Identity = user.identities?.find((identity) =>
+    isWeb3IdentityProvider(identity.provider),
   );
 
   const identityAddress =
@@ -397,10 +407,38 @@ export function getWeb3WalletAddress(user: User | null | undefined): string | nu
         ? web3Identity.identity_data.address
         : null;
 
-  if (identityAddress) return identityAddress;
+  if (identityAddress) return normalizeWeb3IdentityAddress(identityAddress);
 
   const email = user.email;
-  if (email && !email.includes("@")) return email;
+  if (email && !email.includes("@")) return normalizeWeb3IdentityAddress(email);
+
+  return null;
+}
+
+export function getWeb3AuthPayoutChain(
+  user: User | null | undefined,
+): PayoutChain | null {
+  if (!user) return null;
+
+  const web3Identity = user.identities?.find((identity) =>
+    isWeb3IdentityProvider(identity.provider),
+  );
+  if (!web3Identity) return null;
+
+  const sub =
+    typeof web3Identity.identity_data?.sub === "string"
+      ? web3Identity.identity_data.sub
+      : null;
+
+  if (sub) {
+    const match = /^web3:(ethereum|solana):/i.exec(sub);
+    if (match) return match[1].toLowerCase() === "solana" ? "sol" : "eth";
+  }
+
+  if (web3Identity.provider === "solana") return "sol";
+  if (web3Identity.provider === "ethereum" || web3Identity.provider === "web3") {
+    return "eth";
+  }
 
   return null;
 }
@@ -408,11 +446,8 @@ export function getWeb3WalletAddress(user: User | null | undefined): string | nu
 export function isWeb3User(user: User | null | undefined): boolean {
   if (!user) return false;
   if (getWeb3WalletAddress(user)) return true;
-  return !!user.identities?.some(
-    (identity) =>
-      identity.provider === "web3" ||
-      identity.provider === "ethereum" ||
-      identity.provider === "solana",
+  return !!user.identities?.some((identity) =>
+    isWeb3IdentityProvider(identity.provider),
   );
 }
 
