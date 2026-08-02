@@ -1,6 +1,7 @@
 import type { AppProps } from "next/app";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { BlogScrollRestoration } from "@/components/blog/BlogScrollRestoration";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SupabaseRealtimeProvider } from "@/components/providers/SupabaseRealtimeProvider";
@@ -25,6 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <BlogScrollRestoration />
           <Component {...pageProps} />
           <Analytics />
+          <SpeedInsights />
         </div>
       </SupabaseRealtimeProvider>
     </AuthProvider>
