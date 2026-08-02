@@ -13,6 +13,7 @@ export interface UserStats {
 export interface NodeStats {
   id: string;
   isActive: boolean;
+  nodeIp?: string | null;
   dailyEarnings: Record<string, number>; // JSON structure: { "2024-01-15": 25.50, ... }
   bandwidthUsed?: number; // Float in GB
   uptimeMinutes?: number; // Uptime in minutes

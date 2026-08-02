@@ -1,12 +1,25 @@
 import type { GetServerSideProps } from "next";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import { AuthButtons } from "@/components/AuthButtons";
 import { AuthCard, AuthShell } from "@/components/brand/AuthShell";
 import { useAuth } from "@/hooks/useAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AlertCircle, ArrowRight, Check, Loader2, LogIn, Server, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Keep wallet/auth UI client-only so SSR lambdas don't load rpc-websockets → ESM uuid.
+const AuthButtons = dynamic(
+  () => import("@/components/AuthButtons").then((m) => m.AuthButtons),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center py-4">
+        <Loader2 className="w-5 h-5 text-orange-400 animate-spin" />
+      </div>
+    ),
+  },
+);
 
 type ConnectPageProps =
   | { ok: true; uuid: string }

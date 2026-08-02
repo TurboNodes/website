@@ -73,6 +73,7 @@
     "tailwindcss": "^4.1.11",
     "three": "^0.179.1",
     "unified": "^11.0.5",
+    "uuid": "^9.0.1",
     "viem": "^2.54.3",
     "wagmi": "^3.6.21"
   },
@@ -90,5 +91,10 @@
     "tsx": "^4.19.4",
     "tw-animate-css": "^1.3.3",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "rpc-websockets": {
+      "uuid": "9.0.1"
+    }
   }
 }

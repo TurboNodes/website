@@ -101,6 +101,7 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
           const nodesStatsData: NodeStats[] = nodesData.map((node: Record<string, unknown>) => ({
             id: node.id as string,
             isActive: (node.isActive as boolean) ?? false,
+            nodeIp: (node.nodeIp as string | null) ?? null,
             dailyEarnings: (node.dailyEarnings as Record<string, number>) || {},
             bandwidthUsed: node.bandwidthUsed as number,
             uptimeMinutes: node.uptimeMinutes as number,

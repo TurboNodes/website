@@ -1,13 +1,26 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import type { GetServerSideProps } from "next";
 import { Loader2 } from "lucide-react";
-import { AuthButtons } from "@/components/AuthButtons";
 import { AuthCard, AuthShell } from "@/components/brand/AuthShell";
 import { useAuth } from "@/hooks/useAuth";
 import type { JoinReferralProps } from "@/lib/joinReferral";
 import { getJoinReferralProps } from "@/lib/joinReferral";
+
+// Keep wallet/auth UI client-only so SSR lambdas don't load rpc-websockets → ESM uuid.
+const AuthButtons = dynamic(
+  () => import("@/components/AuthButtons").then((m) => m.AuthButtons),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center py-4">
+        <Loader2 className="w-5 h-5 text-orange-400 animate-spin" />
+      </div>
+    ),
+  },
+);
 
 export default function JoinPage({ prefillReferralCode, referralCodeError }: JoinReferralProps) {
   const router = useRouter();
