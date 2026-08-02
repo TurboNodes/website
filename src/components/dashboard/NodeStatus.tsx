@@ -86,7 +86,7 @@ export function NodeStatus({ nodeStats, isConnected }: NodeStatusProps) {
       </div>
 
       <div className="flex-1 min-h-0 space-y-2.5 overflow-y-auto pr-0.5">
-        {nodes.map((node, index) => {
+        {nodes.map((node) => {
           const online = node.isActive && node.isConnected;
           return (
             <div
@@ -99,8 +99,8 @@ export function NodeStatus({ nodeStats, isConnected }: NodeStatusProps) {
               )}
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="relative shrink-0">
                     <div
                       className={cn(
                         "w-2 h-2 rounded-full",
@@ -111,8 +111,8 @@ export function NodeStatus({ nodeStats, isConnected }: NodeStatusProps) {
                       <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 animate-ping opacity-40" />
                     )}
                   </div>
-                  <span className="text-sm font-medium text-white">
-                    Node {index + 1}
+                  <span className="text-sm font-medium text-white font-mono truncate">
+                    {node.nodeIp || "Unknown IP"}
                   </span>
                 </div>
                 <span

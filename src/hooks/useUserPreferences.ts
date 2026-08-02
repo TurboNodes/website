@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
-import type { ChainWallet, PayoutChain, PayoutPreferences } from "@/lib/payoutChains";
+import type { PayoutChain, PayoutPreferences } from "@/lib/payoutChains";
 import { getPayoutWallets } from "@/lib/payoutChains";
 import {
   getWeb3AuthPayoutChain,
@@ -71,7 +71,7 @@ export function useUserPreferences() {
 
     pairingAttempted.current = true;
 
-    const next: PayoutPreferences = {
+    const next: UserPreferences = {
       ...preferences,
       payoutWallets: {
         ...wallets,
