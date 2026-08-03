@@ -1,8 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSupabaseAsUser, getUserFromRequest } from "@/lib/apiAuth";
 import { anonymizeReferralUser, buildReferralLink } from "@/lib/referrals";
+import { VERIFIED_EARNINGS_THRESHOLD, getTier } from "@/lib/referralTiers";
 import { calculateTotalEarnings } from "@/lib/utils";
-import type { NodeStats, ReferralEarningEntry, ReferralStats, ReferredUser } from "@/types";
+import type {
+  NodeStats,
+  ReferralEarningEntry,
+  ReferralStats,
+  ReferredUser,
+  ReferredUserStatus,
+} from "@/types";
+
+function resolveStatus(totalEarnings: number): ReferredUserStatus {
+  if (totalEarnings > VERIFIED_EARNINGS_THRESHOLD) return "verified";
+  return totalEarnings > 0 ? "active" : "pending";
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -86,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data: earningsRows, error: earningsError } = await supabase
       .from("referral_earnings")
-      .select("id, referredId, type, amount, sourceEarningsDelta, createdAt")
+      .select("id, referredId, type, amount, sourceEarningsDelta, rate, createdAt")
       .eq("referrerId", user.id)
       .order("createdAt", { ascending: false })
       .limit(50);
@@ -126,7 +138,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return {
         id: ref.referredId,
         label: anonymizeReferralUser(profile?.username, profile?.email),
-        status: totalEarnings > 0 ? "active" : "pending",
+        status: resolveStatus(totalEarnings),
         totalEarnings,
         commissionEarned: commissionByReferred.get(ref.referredId) ?? 0,
         joinedAt: ref.createdAt,
@@ -138,9 +150,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       type: row.type as ReferralEarningEntry["type"],
       amount: Number(row.amount) || 0,
       sourceEarningsDelta: row.sourceEarningsDelta != null ? Number(row.sourceEarningsDelta) : null,
+      rate: row.rate != null ? Number(row.rate) : null,
       referredId: row.referredId,
       createdAt: row.createdAt,
     }));
+
+    const verifiedReferred = referredUsers.filter((u) => u.status === "verified").length;
 
     const stats: ReferralStats = {
       referralCode: userRow.referralCode,
@@ -148,7 +163,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       referralBalance: Number(userRow.referralBalance) || 0,
       commissionTotal,
       totalReferred: referredUsers.length,
-      activeReferred: referredUsers.filter((u) => u.status === "active").length,
+      // Anyone earning at all, verified or not.
+      activeReferred: referredUsers.filter((u) => u.status !== "pending").length,
+      verifiedReferred,
+      commissionRate: getTier(verifiedReferred).rate,
       referredUsers,
       recentEarnings,
     };

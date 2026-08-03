@@ -9,7 +9,7 @@ interface ShareReferralButtonsProps {
 
 function ShareIcon({ children }: { children: React.ReactNode }) {
   return (
-    <span className="w-8 h-8 rounded-lg border border-neutral-700 bg-neutral-800/60 flex items-center justify-center">
+    <span className="w-9 h-9 rounded-lg border border-neutral-700 bg-neutral-800/60 flex items-center justify-center group-hover:border-orange-500/40 group-hover:bg-orange-500/10 transition-colors">
       {children}
     </span>
   );
@@ -69,7 +69,7 @@ export function ShareReferralButtons({ referralLink }: ShareReferralButtonsProps
             rel="noopener noreferrer"
             aria-label={label}
             title={label}
-            className="hover:scale-105 transition-transform"
+            className="group hover:scale-105 transition-transform"
           >
             <ShareIcon>{icon}</ShareIcon>
           </a>

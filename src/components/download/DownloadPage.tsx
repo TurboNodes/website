@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { ArrowLeft } from "lucide-react";
 import { OnboardingNav } from "@/components/landing/OnboardingNav";
@@ -45,8 +44,6 @@ export function DownloadPage() {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [baseUrl, setBaseUrl] = useState("https://turbo.network");
 
-  const backHref = buildDownloadBackPath(router.query.from);
-
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
@@ -66,6 +63,15 @@ export function DownloadPage() {
     DOWNLOAD_OPTIONS.find(
       (option) => option.platform === platform && option.arch === arch,
     )?.label ?? "Turbo client";
+
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    void router.push(buildDownloadBackPath(router.query.from));
+  }, [router]);
 
   const handleDownload = useCallback(async () => {
     if (isDownloading) return;
@@ -91,13 +97,14 @@ export function DownloadPage() {
       <div className="min-h-dvh bg-neutral-950 text-white flex flex-col">
         <main className="flex-1 pt-24 pb-16 px-4 sm:px-6">
           <div className="max-w-2xl mx-auto">
-            <Link
-              href={backHref}
+            <button
+              type="button"
+              onClick={handleBack}
               className="inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-300 transition-colors mb-8"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back to home
-            </Link>
+              Back
+            </button>
 
             <p className="text-xs font-mono tracking-widest uppercase text-orange-400/90 mb-3">
               // download

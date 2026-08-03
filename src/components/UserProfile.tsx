@@ -2,9 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
-  Check,
   ChevronDown,
-  Copy,
+  MessageCircle,
   LogOut,
   Settings,
   Users,
@@ -14,18 +13,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { buildReferralLink } from "@/lib/referrals";
-import { supabase } from "@/lib/supabase";
 
 import { formatUsdcOnChain, getPrimaryPayoutWallet, truncateAddress } from "@/lib/payoutChains";
+import { TOP_REFERRAL_TIER, formatRate } from "@/lib/referralTiers";
 import { getAuthDisplayName, getAuthDisplaySubtitle } from "@/lib/web3Auth";
+
+const DISCORD_SUPPORT_URL = "https://discord.gg/ZqdvQkSEc7";
 
 export function UserProfile() {
   const { user, signOut } = useAuth();
   const { preferences } = useUserPreferences();
   const [open, setOpen] = useState(false);
-  const [referralLink, setReferralLink] = useState<string | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
@@ -59,46 +57,6 @@ export function UserProfile() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
-
-  useEffect(() => {
-    if (!open || !user?.id) {
-      setReferralLink(null);
-      setLinkCopied(false);
-      return;
-    }
-
-    const userId = user.id;
-    let cancelled = false;
-
-    async function loadReferralLink() {
-      const { data, error } = await supabase
-        .from("users")
-        .select("referralCode")
-        .eq("id", userId)
-        .single();
-
-      if (cancelled || error || !data?.referralCode) return;
-      setReferralLink(buildReferralLink(data.referralCode));
-    }
-
-    void loadReferralLink();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, user?.id]);
-
-  const copyReferralLink = async () => {
-    if (!referralLink) return;
-
-    try {
-      await navigator.clipboard.writeText(referralLink);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy referral link:", err);
-    }
-  };
 
   return (
     <div ref={menuRef} className="relative">
@@ -179,47 +137,23 @@ export function UserProfile() {
                 Set up payout wallet
               </Link>
             )}
-
-            <div className="mt-3">
-              <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 mb-2">
-                Referral link
-              </p>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => void copyReferralLink()}
-                disabled={!referralLink}
-                title={referralLink ? "Copy referral link" : "Loading referral link"}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-lg border px-3 py-2 transition-colors",
-                  linkCopied
-                    ? "border-neutral-600 bg-neutral-800/40"
-                    : "border-neutral-800/60 bg-neutral-950/60 hover:border-neutral-700 hover:bg-neutral-800/40",
-                  !referralLink && "opacity-60 cursor-wait",
-                )}
-              >
-                <Users className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
-                <span className="min-w-0 flex-1 text-left">
-                  <span className="block font-mono text-xs text-neutral-400 truncate">
-                    {linkCopied ? "Referral link copied!" : referralLink ?? "Loading…"}
-                  </span>
-                  {!linkCopied && referralLink && (
-                    <span className="block text-[10px] text-neutral-600 mt-0.5">
-                      Tap to copy and share
-                    </span>
-                  )}
-                </span>
-                {linkCopied ? (
-                  <Check className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
-                )}
-              </button>
-            </div>
           </div>
 
           {/* Menu actions */}
-          <div className="p-1.5">
+          <div className="p-1.5 space-y-0.5">
+            <Link
+              href="/dashboard/referrals"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="group flex w-full items-center gap-2.5 rounded-lg border border-orange-400/70 bg-neutral-900 px-3 py-2.5 text-sm text-white shadow-[0_0_16px_-4px_rgba(249,115,22,0.45)] hover:border-orange-400 hover:bg-neutral-900/80 transition-colors"
+            >
+              <Users className="w-4 h-4 text-orange-400 group-hover:text-amber-300 transition-colors" />
+              <span className="flex-1 font-medium">Referrals</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300/90">
+                Earn up to {formatRate(TOP_REFERRAL_TIER.rate)}
+              </span>
+            </Link>
+
             <Link
               href="/dashboard/withdrawal"
               role="menuitem"
@@ -231,16 +165,6 @@ export function UserProfile() {
             </Link>
 
             <Link
-              href="/dashboard/referrals"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition-colors"
-            >
-              <Users className="w-4 h-4 text-neutral-500" />
-              Referrals
-            </Link>
-
-            <Link
               href="/dashboard/settings"
               role="menuitem"
               onClick={() => setOpen(false)}
@@ -249,6 +173,18 @@ export function UserProfile() {
               <Settings className="w-4 h-4 text-neutral-500" />
               Account settings
             </Link>
+
+            <a
+              href={DISCORD_SUPPORT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition-colors"
+            >
+              <MessageCircle className="w-4 h-4 text-neutral-500" />
+              Support
+            </a>
 
             <button
               type="button"
