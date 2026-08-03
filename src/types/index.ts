@@ -32,10 +32,17 @@ export interface EarningsDay {
   earnings: number;
 }
 
+/**
+ * verified - earned more than the verification threshold, counts toward tier
+ * active   - started earning but not yet verified
+ * pending  - no earnings yet
+ */
+export type ReferredUserStatus = "verified" | "active" | "pending";
+
 export interface ReferredUser {
   id: string;
   label: string;
-  status: "active" | "pending";
+  status: ReferredUserStatus;
   totalEarnings: number;
   commissionEarned: number;
   joinedAt: string;
@@ -46,6 +53,8 @@ export interface ReferralEarningEntry {
   type: "milestone_bonus" | "commission";
   amount: number;
   sourceEarningsDelta: number | null;
+  /** Rate this payout was paid at. Null for rows predating tiered commission. */
+  rate: number | null;
   referredId: string;
   createdAt: string;
 }
@@ -57,6 +66,10 @@ export interface ReferralStats {
   commissionTotal: number;
   totalReferred: number;
   activeReferred: number;
+  /** Referrals that count toward the commission tier. */
+  verifiedReferred: number;
+  /** Current commission rate as a fraction, e.g. 0.075. */
+  commissionRate: number;
   referredUsers: ReferredUser[];
   recentEarnings: ReferralEarningEntry[];
 }

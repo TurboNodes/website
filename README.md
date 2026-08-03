@@ -47,11 +47,24 @@ Apply the Supabase migrations before using referrals:
 # 2. supabase/migrations/002_restore_grants.sql
 # 3. supabase/migrations/003_commission_only_new_users.sql
 # 4. supabase/migrations/004_node_earnings_only_commission.sql
+# 5. supabase/migrations/005_tiered_referral_commission.sql
 ```
 
 Migration `004_node_earnings_only_commission.sql` ensures commissions are calculated from **node operator earnings only** — referral balance and non-date `dailyEarnings` entries never count.
 
-Referral rewards: **10% lifetime commission** on referred users' **node operator earnings** only. Referral income a user receives from their own referrals is never commissionable for their referrer. Commissions are calculated automatically via database triggers when node earnings update. Only **new signups** can be attributed via a referral link.
+Referral rewards: **tiered lifetime commission** on referred users' **node operator earnings** only, based on how many of your referrals are **verified**. A referral verifies automatically once that user earns more than **$1** in node earnings, which stops empty signups from inflating a tier.
+
+| Tier | Verified referrals | Rate |
+| --- | --- | --- |
+| Relay | 0-4 | 5% |
+| Hub | 5-9 | 7.5% |
+| Gateway | 10-24 | 10% |
+| Core | 25-49 | 20% |
+| Backbone | 50+ | 30% |
+
+The rate is resolved at payout time and applies **forward only** — already-commissioned earnings are never repriced, and each row in `referral_earnings` records the `rate` it was paid at. The ladder lives in two places that must stay in sync: `referral_commission_rate()` in `supabase/migrations/005_tiered_referral_commission.sql` (authoritative, computes payouts) and `REFERRAL_TIERS` in `src/lib/referralTiers.ts` (drives the dashboard UI).
+
+Referral income a user receives from their own referrals is never commissionable for their referrer. Commissions are calculated automatically via database triggers when node earnings update. Only **new signups** can be attributed via a referral link.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

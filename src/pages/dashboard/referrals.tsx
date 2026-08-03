@@ -8,8 +8,10 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ReferralEarningsHistory } from "@/components/referrals/ReferralEarningsHistory";
 import { ReferralLinkCard } from "@/components/referrals/ReferralLinkCard";
 import { ReferralStatsCards } from "@/components/referrals/ReferralStatsCards";
+import { ReferralTierCard } from "@/components/referrals/ReferralTierCard";
 import { ReferredUsersTable } from "@/components/referrals/ReferredUsersTable";
 import { ShareReferralButtons } from "@/components/referrals/ShareReferralButtons";
+import { BASE_REFERRAL_TIER, TOP_REFERRAL_TIER, formatRate } from "@/lib/referralTiers";
 
 export default function ReferralsPage() {
   const { isAuthenticated, loading: authLoading } = useRequireAuth();
@@ -34,7 +36,7 @@ export default function ReferralsPage() {
   return (
     <DashboardShell title="Referrals | Turbo">
       <div className="h-full overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 py-6 sm:py-8">
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-orange-400 transition-colors mb-6"
@@ -44,9 +46,20 @@ export default function ReferralsPage() {
           </Link>
 
           <div className="mb-8">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-orange-400/90 mb-2">
+              // earn_with_friends
+            </p>
             <h1 className="text-2xl font-semibold text-white tracking-tight">Referrals</h1>
-            <p className="text-sm text-neutral-500 mt-1">
-              Invite friends and earn 10% lifetime commission on their node earnings.
+            <p className="text-sm text-neutral-400 mt-1.5 max-w-md leading-relaxed">
+              Invite friends and earn lifetime commission on their node earnings — starting at{" "}
+              <span className="text-amber-300/90 font-medium">
+                {formatRate(BASE_REFERRAL_TIER.rate)}
+              </span>{" "}
+              and scaling up to{" "}
+              <span className="text-amber-300/90 font-medium">
+                {formatRate(TOP_REFERRAL_TIER.rate)}
+              </span>{" "}
+              as more referrals verify.
             </p>
           </div>
 
@@ -67,16 +80,21 @@ export default function ReferralsPage() {
             <div className="space-y-5">
               <ReferralStatsCards
                 totalReferred={stats.totalReferred}
-                activeReferred={stats.activeReferred}
+                verifiedReferred={stats.verifiedReferred}
                 referralBalance={stats.referralBalance}
                 commissionTotal={stats.commissionTotal}
               />
+              <ReferralTierCard verifiedReferred={stats.verifiedReferred} />
               <ReferralLinkCard
                 referralCode={stats.referralCode}
                 referralLink={stats.referralLink}
+                commissionRate={stats.commissionRate}
               />
               <ShareReferralButtons referralLink={stats.referralLink} />
-              <ReferredUsersTable referredUsers={stats.referredUsers} />
+              <ReferredUsersTable
+                referredUsers={stats.referredUsers}
+                commissionRate={stats.commissionRate}
+              />
               <ReferralEarningsHistory recentEarnings={stats.recentEarnings} />
             </div>
           )}

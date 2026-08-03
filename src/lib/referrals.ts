@@ -1,4 +1,3 @@
-export const COMMISSION_RATE = 0.1;
 export const NEW_USER_REFERRAL_WINDOW_MINUTES = 30;
 
 export function normalizeReferralCode(code: string): string {
