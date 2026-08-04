@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { ArrowRight, ArrowUp, Lock, ShieldCheck, UserCheck } from "lucide-react";
 import { NetworkAccessForm } from "./NetworkAccessForm";
 import { LatencyBenchmarks } from "./LatencyBenchmarks";
@@ -8,6 +8,17 @@ import styles from "./network-access.module.css";
 import globeStyles from "./network-globe.module.css";
 
 const SCROLL_TOP_THRESHOLD = 400;
+
+function scrollToRequestAccess(e: MouseEvent<HTMLAnchorElement>) {
+  e.preventDefault();
+  const el = document.getElementById("request-access");
+  if (!el) return;
+  const prefersReduced = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  el.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth" });
+  history.pushState(null, "", "#request-access");
+}
 
 const NetworkGlobe = dynamic(
   () => import("./NetworkGlobe").then((m) => m.NetworkGlobe),
@@ -77,7 +88,11 @@ export function NetworkAccessPage() {
           <span className={`${styles.eyebrow} hidden sm:inline`}>
             Network Access
           </span>
-          <a href="#request-access" className={styles.primaryBtnSm}>
+          <a
+            href="#request-access"
+            className={styles.primaryBtnSm}
+            onClick={scrollToRequestAccess}
+          >
             Request access
           </a>
         </div>
@@ -110,7 +125,11 @@ export function NetworkAccessPage() {
               <div
                 className={`mt-10 flex flex-wrap items-center gap-3 ${styles.fadeUp} ${styles.fadeUpDelay3}`}
               >
-                <a href="#request-access" className={styles.primaryBtn}>
+                <a
+                  href="#request-access"
+                  className={styles.primaryBtn}
+                  onClick={scrollToRequestAccess}
+                >
                   Talk to our team
                   <ArrowRight className="size-4" />
                 </a>
