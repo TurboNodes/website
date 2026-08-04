@@ -1,0 +1,203 @@
+.globeShell {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  margin-inline: auto;
+}
+
+.canvas {
+  height: min(520px, 92vw);
+  min-height: 390px;
+  padding-bottom: 3.4rem;
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.canvas canvas:active {
+  cursor: grabbing;
+}
+
+.hubCard {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  left: 0;
+  width: 158px;
+  padding: 0.65rem 0.7rem 0.7rem;
+  pointer-events: none;
+  border: 1px solid rgba(20, 42, 78, 0.1);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 42px rgba(29, 47, 79, 0.16);
+  backdrop-filter: blur(14px);
+}
+
+.hubCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.hubCode {
+  color: #1a4fd6;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.54rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+
+.hubStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  color: #29845b;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+}
+
+.hubCity {
+  margin: 0.35rem 0 0;
+  color: #17243a;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.hubAws {
+  margin: 0.2rem 0 0;
+  color: #7c879a;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+}
+
+.latencyFast {
+  color: #1a4fd6;
+}
+
+.latencyMid {
+  color: #2f5fb8;
+}
+
+.latencySlow {
+  color: #4a5d7a;
+}
+
+.hubMetrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  margin: 0.55rem 0 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(20, 42, 78, 0.08);
+}
+
+.hubMetrics dt {
+  color: #7c879a;
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+}
+
+.hubMetrics dd {
+  margin: 0.18rem 0 0;
+  color: #17243a;
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hubMetrics .pressureLow {
+  color: #1f7a4c;
+}
+
+.hubMetrics .pressureMedium {
+  color: #c47a00;
+}
+
+.hubMetrics .pressureHigh {
+  color: #c0392b;
+}
+
+.latencyStrip {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 0.35rem;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  pointer-events: none;
+  padding: 0 0.35rem;
+}
+
+.latencyChip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(20, 42, 78, 0.08);
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(10px);
+}
+
+.latencyChipBest {
+  border-color: rgba(26, 79, 214, 0.28);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 22px rgba(26, 79, 214, 0.1);
+}
+
+.latencyChipRegion {
+  overflow: hidden;
+  color: #748096;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.latencyChipValue {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.latencyChipValue em {
+  margin-left: 0.12rem;
+  font-size: 0.55rem;
+  font-style: normal;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.fallback {
+  display: grid;
+  height: min(520px, 92vw);
+  min-height: 390px;
+  place-items: center;
+}
+
+.fallback::after {
+  width: 58%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(26, 79, 214, 0.08);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #fff, #e7edf7 65%, #dce5f2);
+  box-shadow: 0 24px 60px rgba(35, 52, 82, 0.12);
+  content: "";
+}
+
+@media (max-width: 480px) {
+  .canvas,
+  .fallback {
+    min-height: 350px;
+  }
+}

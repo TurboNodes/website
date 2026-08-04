@@ -5,10 +5,10 @@ export default function Network() {
   return (
     <>
       <Head>
-        <title>Network Access — Residential Proxies | Turbo</title>
+        <title>Network Access — Consent-Based Residential Proxies | Turbo</title>
         <meta
           name="description"
-          content="Internet-scale residential proxy infrastructure for businesses, researchers, and automators. Geo-diverse egress from real homes."
+          content="Proxies are no longer the bottleneck. Ethically sourced residential egress with 99.5% success rates, TLS-encrypted paths, and industry-leading latency across NA, Europe, and Asia-Pacific."
         />
         <link rel="canonical" href="https://turbo.network/network" />
       </Head>
