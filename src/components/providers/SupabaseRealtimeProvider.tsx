@@ -48,6 +48,7 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
 
     const userId = user.id;
     let cancelled = false;
+    let hasSubscribed = false;
 
     async function fetchData(showLoading: boolean) {
       const fetchId = ++fetchIdRef.current;
@@ -69,7 +70,6 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
         if (userError && userError.code !== "PGRST116") {
           console.error("User fetch error:", userError);
           setError(`User data error: ${userError.message}`);
-          setHasNodeData(null);
           return;
         }
 
@@ -83,7 +83,6 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
         if (nodesError) {
           console.error("Nodes fetch error:", nodesError);
           setError(`Nodes data error: ${nodesError.message}`);
-          setHasNodeData(null);
           return;
         }
 
@@ -125,20 +124,16 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
 
           const history = extractEarningsHistory(nodesStatsData);
           setEarningsHistory(history);
-
-          setIsConnected(true);
-        } else {
+        } else if (!userData) {
           setUserStats(null);
           setNodeStats([]);
           setEarningsHistory([0, 0, 0, 0, 0, 0, 0]);
           setHasNodeData(false);
-          setIsConnected(true);
         }
       } catch (err) {
         if (cancelled || fetchId !== fetchIdRef.current) return;
         console.error("Error in fetchData:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
-        setHasNodeData(null);
       } finally {
         if (showLoading && fetchId === fetchIdRef.current && !cancelled) {
           setLoading(false);
@@ -163,14 +158,33 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
         },
       )
       .subscribe((status) => {
-        if (!cancelled) {
-          setIsConnected(status === "SUBSCRIBED");
+        if (cancelled) return;
+
+        const subscribed = status === "SUBSCRIBED";
+        setIsConnected(subscribed);
+
+        // After idle tabs, the websocket often reconnects having missed
+        // DELETE/INSERT churn. Refetch so the node list can't stick short.
+        if (subscribed && hasSubscribed) {
+          void fetchData(false);
+        }
+        if (subscribed) {
+          hasSubscribed = true;
         }
       });
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void fetchData(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       cancelled = true;
       fetchIdRef.current += 1;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       supabase.removeChannel(channel);
     };
   }, [user?.id, isAuthenticated, authLoading]);

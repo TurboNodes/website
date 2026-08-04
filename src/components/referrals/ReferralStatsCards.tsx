@@ -1,5 +1,4 @@
-import React from "react";
-import { BadgeCheck, DollarSign, Gift, Users } from "lucide-react";
+import { BadgeCheck, DollarSign, Gift, Users, type LucideIcon } from "lucide-react";
 
 interface ReferralStatsCardsProps {
   totalReferred: number;
@@ -16,7 +15,7 @@ function StatCard({
 }: {
   label: string;
   value: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   accent?: boolean;
 }) {
   return (
