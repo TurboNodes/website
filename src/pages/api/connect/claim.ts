@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data: requestRow, error: requestError } = await admin
     .from("node_connect_requests")
-    .select("uuid, node_ip, expires_at, consumed_at")
+    .select("uuid, device_id, node_ip, expires_at, consumed_at")
     .eq("uuid", uuid)
     .maybeSingle();
 
@@ -34,17 +34,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ ok: false, error: "Unknown uuid" });
   }
 
-  if (requestRow.consumed_at) {
-    const nodeIp = String(requestRow.node_ip || "").trim();
-    if (!nodeIp) {
-      return res.status(500).json({ ok: false, error: "Missing node mapping" });
-    }
+  const deviceId = String(requestRow.device_id || "").trim();
+  const nodeIp = String(requestRow.node_ip || "").trim();
+  if (!deviceId) {
+    return res.status(500).json({ ok: false, error: "Missing node mapping" });
+  }
 
+  if (requestRow.consumed_at) {
     // Even if the uuid was consumed, we must enforce "pair once".
     const { data: existingNode, error: existingNodeError } = await admin
       .from("nodes")
       .select("id, userId, nodeIp")
-      .eq("nodeIp", nodeIp)
+      .eq("deviceId", deviceId)
       .maybeSingle();
 
     if (existingNodeError || !existingNode) {
@@ -58,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .json({ ok: false, error: "This node is already connected to another user." });
     }
 
-    return res.status(200).json({ ok: true, nodeIp });
+    return res.status(200).json({ ok: true, nodeIp: existingNode.nodeIp ?? nodeIp });
   }
 
   const expiresAt = new Date(requestRow.expires_at as string).getTime();
@@ -66,47 +67,76 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(410).json({ ok: false, error: "Expired uuid" });
   }
 
-  const nodeIp = String(requestRow.node_ip || "").trim();
-  if (!nodeIp) {
-    return res.status(500).json({ ok: false, error: "Missing node mapping" });
-  }
-
-  // Link user to node: node IP is treated as the node identifier ("name"),
-  // stored in nodes.nodeIp. nodes.id remains a UUID.
+  // Link user to node: the client's persistent device id is the node
+  // identifier, generated once on install and unrelated to its network
+  // address. nodeIp is stored alongside it purely for display in the
+  // dashboard — it's whatever address the network handed this connection,
+  // not a stable identity, so it plays no part in ownership.
   //
-  // IMPORTANT: a node must not be paired to two different users.
-  // So we never "upsert userId" on conflict; we only insert if missing,
-  // then we verify ownership.
+  // Unpairing clears userId to NULL rather than deleting the row (see
+  // /api/nodes/unpair), so a deviceId that has been paired before already has
+  // a row here — possibly still owned by someone else, possibly free. Claim
+  // by conditional update ("take it iff nobody owns it") instead of an
+  // insert-if-missing upsert, which would silently no-op against that
+  // existing row and leave it unowned.
+  //
+  // IMPORTANT: a node must not be paired to two different users at once.
   const nowIso = new Date().toISOString();
-  const nodeId = crypto.randomUUID();
 
-  const { error: upsertIgnoreError } = await admin.from("nodes").upsert(
-    {
-      id: nodeId,
-      nodeIp,
-      userId: user.id,
-      isActive: true,
-      updatedAt: nowIso,
-      createdAt: nowIso,
-      dailyEarnings: {},
-    },
-    { onConflict: "nodeIp", ignoreDuplicates: true },
-  );
-
-  if (upsertIgnoreError) {
-    console.error("nodes upsert error:", upsertIgnoreError);
-    return res.status(500).json({ ok: false, error: "Failed to link node" });
-  }
-
-  const { data: existingNode, error: existingNodeError } = await admin
+  const { data: claimedNode, error: claimError } = await admin
     .from("nodes")
+    .update({ userId: user.id, isActive: true, nodeIp, updatedAt: nowIso })
+    .eq("deviceId", deviceId)
+    .is("userId", null)
     .select("id, userId, nodeIp")
-    .eq("nodeIp", nodeIp)
     .maybeSingle();
 
-  if (existingNodeError || !existingNode) {
-    console.error("nodes lookup error:", existingNodeError);
+  if (claimError) {
+    console.error("nodes claim error:", claimError);
     return res.status(500).json({ ok: false, error: "Failed to link node" });
+  }
+
+  let existingNode = claimedNode;
+
+  if (!existingNode) {
+    // The conditional update matched nothing: either this deviceId has never
+    // been seen before (insert it fresh), or it is already owned (by us,
+    // idempotently, or by someone else).
+    const { data: currentNode, error: lookupError } = await admin
+      .from("nodes")
+      .select("id, userId, nodeIp")
+      .eq("deviceId", deviceId)
+      .maybeSingle();
+
+    if (lookupError) {
+      console.error("nodes lookup error:", lookupError);
+      return res.status(500).json({ ok: false, error: "Failed to link node" });
+    }
+
+    if (!currentNode) {
+      const { data: insertedNode, error: insertError } = await admin
+        .from("nodes")
+        .insert({
+          id: crypto.randomUUID(),
+          deviceId,
+          nodeIp,
+          userId: user.id,
+          isActive: true,
+          updatedAt: nowIso,
+          createdAt: nowIso,
+          dailyEarnings: {},
+        })
+        .select("id, userId, nodeIp")
+        .maybeSingle();
+
+      if (insertError || !insertedNode) {
+        console.error("nodes insert error:", insertError);
+        return res.status(500).json({ ok: false, error: "Failed to link node" });
+      }
+      existingNode = insertedNode;
+    } else {
+      existingNode = currentNode;
+    }
   }
 
   if (existingNode.userId !== user.id) {
@@ -126,6 +156,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Node linked already; still return success.
   }
 
-  return res.status(200).json({ ok: true, nodeIp });
+  return res.status(200).json({ ok: true, nodeIp: existingNode.nodeIp ?? nodeIp });
 }
-
