@@ -1,4 +1,5 @@
 import React from "react";
+import { PANEL_CLASS } from "./ui";
 import { cn } from "@/lib/utils";
 
 interface StatsCardProps {
@@ -20,18 +21,18 @@ export const StatsCard: React.FC<StatsCardProps> = ({
 }) => (
   <div
     className={cn(
-      "rounded-xl border border-neutral-800/80 bg-neutral-900/40 backdrop-blur-sm",
-      "hover:border-neutral-700 hover:bg-neutral-900/60 transition-all duration-200",
+      PANEL_CLASS,
+      "transition-colors duration-200 hover:border-neutral-700 hover:bg-neutral-900/70",
       compact ? "p-4" : "p-4 sm:p-5",
     )}
   >
-    <div className="flex items-start justify-between gap-3">
-      <div
+    <div className="flex items-center gap-2.5">
+      <span
         className={cn(
-          "p-2 rounded-lg border shrink-0",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border",
           accent === "emerald"
-            ? "bg-emerald-500/10 border-emerald-500/20"
-            : "bg-orange-500/10 border-orange-500/20",
+            ? "bg-emerald-500/10 border-emerald-500/25"
+            : "bg-orange-500/10 border-orange-500/25",
         )}
       >
         <Icon
@@ -40,23 +41,24 @@ export const StatsCard: React.FC<StatsCardProps> = ({
             accent === "emerald" ? "text-emerald-400" : "text-orange-400",
           )}
         />
-      </div>
-      {subtitle && (
-        <p className="text-[10px] font-mono text-neutral-600 text-right leading-tight">
-          {subtitle}
-        </p>
-      )}
+      </span>
+      <p className="min-w-0 text-xs font-semibold uppercase leading-tight tracking-wide text-neutral-300">
+        {title}
+      </p>
     </div>
-    <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 mt-3 mb-1">
-      {title}
-    </p>
+
     <p
       className={cn(
-        "font-semibold text-white tabular-nums tracking-tight",
-        compact ? "text-xl" : "text-2xl",
+        "mt-3 font-semibold text-white tabular-nums tracking-tight",
+        compact ? "text-xl" : "text-2xl sm:text-3xl",
       )}
     >
       {value}
     </p>
+    {subtitle && (
+      <p className="mt-1 text-[11px] font-mono uppercase tracking-widest text-neutral-600">
+        {subtitle}
+      </p>
+    )}
   </div>
 );

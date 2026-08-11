@@ -84,7 +84,7 @@ export function NetworkAccessForm() {
   if (status === "success") {
     return (
       <div className={`${styles.card} rounded-2xl p-8 sm:p-10 text-center`}>
-        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-[#1a4fd6]/10 text-[#1a4fd6]">
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-[#e85d04]/10 text-[#e85d04]">
           <Check className="size-6" />
         </div>
         <h3 className="mb-2 text-xl font-medium">Inquiry sent</h3>

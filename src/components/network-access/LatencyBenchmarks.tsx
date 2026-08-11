@@ -94,7 +94,7 @@ export function LatencyBenchmarks() {
 
       <p className={styles.benchmarkNote}>
         Median (p50) latency in {REGION_LABELS[region]}, lower is better.
-        Illustrative figures from internal comparative tests.
+        Illustrative figures from internal monitoring tools.
       </p>
     </div>
   );

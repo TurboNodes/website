@@ -290,7 +290,7 @@ export function NetworkGlobeScene({
 }) {
   const globe = useRef<THREE.Group>(null);
   const drag = useRef({ active: false, x: 0, y: 0, pointerId: -1 });
-  const rotation = useRef({ x: 0.16, y: -1.65 });
+  const rotation = useRef({ x: 0.38, y: -1.35 });
   const { gl } = useThree();
 
   const land = useMemo(

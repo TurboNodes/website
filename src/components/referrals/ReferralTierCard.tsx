@@ -26,7 +26,6 @@ export function ReferralTierCard({ verifiedReferred }: ReferralTierCardProps) {
 
   return (
     <SettingsPanel
-      label="commission_tier"
       title="Your commission tier"
       description={`Verified referrals unlock higher rates. A referral verifies once they earn more than $${VERIFIED_EARNINGS_THRESHOLD.toFixed(2)} in node earnings.`}
     >

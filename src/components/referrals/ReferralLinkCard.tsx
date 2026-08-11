@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Check, Copy, Link2 } from "lucide-react";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { pill } from "@/components/dashboard/ui";
 import { formatRate } from "@/lib/referralTiers";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,6 @@ export function ReferralLinkCard({
 
   return (
     <SettingsPanel
-      label="referral_link"
       title="Your referral link"
       description={`Share this link or code. When someone signs up and earns, you get ${formatRate(commissionRate)} lifetime rewards.`}
       className="relative overflow-hidden"
@@ -59,10 +59,10 @@ export function ReferralLinkCard({
               type="button"
               onClick={() => copy(referralLink, "link")}
               className={cn(
-                "shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                copiedField === "link"
-                  ? "bg-emerald-500/15 text-emerald-400"
-                  : "bg-gradient-to-r from-orange-600 to-amber-500 text-white hover:from-orange-500 hover:to-amber-400",
+                pill({ size: "md" }),
+                "shrink-0",
+                copiedField === "link" &&
+                  "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/20 shadow-none",
               )}
             >
               {copiedField === "link" ? (
@@ -94,10 +94,10 @@ export function ReferralLinkCard({
               type="button"
               onClick={() => copy(referralCode, "code")}
               className={cn(
-                "shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm transition-colors",
-                copiedField === "code"
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                  : "border-neutral-700 bg-neutral-800/60 text-neutral-300 hover:border-neutral-600 hover:text-white",
+                pill({ variant: "secondary", size: "md" }),
+                "shrink-0",
+                copiedField === "code" &&
+                  "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
               )}
             >
               {copiedField === "code" ? (

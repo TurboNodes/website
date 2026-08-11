@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import type { ReferralStats } from "@/types";
 
 export function useReferrals() {
-  const { user, isAuthenticated, session } = useAuth();
+  const { isAuthenticated, session } = useAuth();
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,30 +44,6 @@ export function useReferrals() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !user?.id) return;
-
-    const channel = supabase
-      .channel("referral-earnings-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "referral_earnings",
-          filter: `referrerId=eq.${user.id}`,
-        },
-        () => {
-          void fetchStats();
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, isAuthenticated, fetchStats]);
 
   return {
     stats,

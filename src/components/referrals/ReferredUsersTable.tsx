@@ -28,7 +28,6 @@ const STATUS_STYLES: Record<ReferredUserStatus, { label: string; className: stri
 export function ReferredUsersTable({ referredUsers, commissionRate }: ReferredUsersTableProps) {
   return (
     <SettingsPanel
-      label="referred_users"
       title="People you referred"
       description={`You earn ${formatRate(commissionRate)} lifetime commission on each referral's node operator earnings. Referrals count toward your tier once they pass $${VERIFIED_EARNINGS_THRESHOLD.toFixed(2)}.`}
     >

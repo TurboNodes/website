@@ -18,7 +18,6 @@ function formatType(type: ReferralEarningEntry["type"]) {
 export function ReferralEarningsHistory({ recentEarnings }: ReferralEarningsHistoryProps) {
   return (
     <SettingsPanel
-      label="earnings_history"
       title="Referral earnings history"
       description="Recent commission payouts from your referrals."
     >
