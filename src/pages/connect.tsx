@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { AuthCard, AuthShell } from "@/components/brand/AuthShell";
 import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AlertCircle, ArrowRight, Check, Loader2, LogIn, Server, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ function isUuid(value: string): boolean {
 export default function ConnectPage(props: ConnectPageProps) {
   const router = useRouter();
   const { user, session, loading, isAuthenticated } = useAuth();
+  const { refetch } = useSupabaseRealtime();
   const [status, setStatus] = useState<
     "checking" | "tutorial" | "signup" | "linking" | "success" | "already_paired" | "error"
   >("checking");
@@ -102,6 +104,12 @@ export default function ConnectPage(props: ConnectPageProps) {
           }
 
           setStatus("success");
+          // The dashboard's node data lives in a provider mounted once at the
+          // app root, keyed off the user/auth state — it has no idea a node
+          // was just claimed and would otherwise keep showing whatever it
+          // fetched before this page loaded. Kick the refetch off now so it
+          // has the full delay below to land before the dashboard mounts.
+          void refetch();
           setTimeout(() => {
             router.push("/dashboard");
           }, 1500);
