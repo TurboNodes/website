@@ -35,6 +35,23 @@ export function getCurlInstallCommand(baseUrl = "https://turbo.network"): string
   return `curl -fsSL ${baseUrl}/install.sh | sh`;
 }
 
+// The same script, told which account to pair to. Installs the headless node
+// as a background service instead of the desktop app, so a machine with no
+// browser — which is most machines worth running a node on — never has to go
+// through /connect to be paired.
+//
+// The token is single-use and expires in minutes, which is what makes it
+// reasonable to put in a command the user will paste around and leave in their
+// shell history.
+// Piped to bash rather than sh: install.sh uses `set -o pipefail`, which dash
+// (/bin/sh on Debian and Ubuntu) rejects outright.
+export function buildHeadlessInstallCommand(
+  baseUrl: string,
+  token: string
+): string {
+  return `curl -fsSL ${baseUrl}/install.sh | bash -s -- --pair-token=${token}`;
+}
+
 export function getDockerPullCommand(
   image = TURBO_DOCKER_IMAGE
 ): string {
@@ -61,21 +78,43 @@ export function getArtifactName(
   }
 }
 
-export function getArtifactArchiveName(
-  platform: Exclude<Platform, "" | "unknown">,
+// The headless node's CI artifact (see build-headless in client-build.yml),
+// following the same <name>_<platform>-<arch> convention as the desktop
+// artifacts above.
+export function getHeadlessArtifactName(
+  platform: Extract<Platform, "linux" | "macos">,
   arch: Architecture
 ): string {
-  return `${getArtifactName(platform, arch)}.zip`;
+  return `turbod_${platform}-${arch}`;
 }
 
+// Every platform is served the runnable payload itself — the disk image, the
+// installer, the binary — never the Actions zip it is uploaded in, so the name
+// the browser saves is the artifact name unchanged.
 export function getDownloadFilename(
   platform: Exclude<Platform, "" | "unknown">,
   arch: Architecture
 ): string {
-  if (platform === "macos") {
-    return getArtifactName(platform, arch);
+  return getArtifactName(platform, arch);
+}
+
+export function getDownloadContentType(
+  platform: Exclude<Platform, "" | "unknown">
+): string {
+  switch (platform) {
+    case "macos":
+      return "application/x-apple-diskimage";
+    case "windows":
+      return "application/vnd.microsoft.portable-executable";
+    case "linux":
+      return "application/octet-stream";
   }
-  return getArtifactArchiveName(platform, arch);
+}
+
+// The Linux build is an unpacked ELF binary: the zip carries no POSIX mode
+// bits through the browser, so the user has to mark it executable themselves.
+export function needsExecutableBit(platform: Platform): boolean {
+  return platform === "linux";
 }
 
 export function buildDownloadUrl(

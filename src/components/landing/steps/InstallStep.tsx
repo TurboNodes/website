@@ -19,15 +19,13 @@ function getInstallCopy(platform: Platform): string[] {
       ];
     case "windows":
       return [
-        "Extract the downloaded .zip if needed",
-        "Run the .exe installer inside",
+        "Run the downloaded .exe",
         "Launch Turbo from the Start menu",
       ];
     case "linux":
       return [
-        "Extract the downloaded .zip",
-        "Make the binary executable if needed",
-        "Launch Turbo from your terminal or menu",
+        "Make the download executable: chmod +x Turbo_linux-*",
+        "Launch Turbo from your terminal",
       ];
     default:
       return [

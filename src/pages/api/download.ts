@@ -1,23 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { unzipSync } from "fflate";
 import {
-  CLIENT_NODE_REPO,
   getArtifactName,
+  getDownloadContentType,
   getDownloadFilename,
   type Architecture,
   type Platform,
 } from "@/lib/turboClientDownload";
+import {
+  downloadArtifactZip,
+  extractArtifactFile,
+  findLatestArtifact,
+  sendBinaryChunked,
+} from "@/lib/githubArtifacts";
 
 type SupportedPlatform = Exclude<Platform, "" | "unknown">;
 
 const PLATFORMS: SupportedPlatform[] = ["windows", "macos", "linux"];
 const ARCHITECTURES: Architecture[] = ["amd64", "arm64"];
-
-interface GitHubArtifact {
-  name: string;
-  archive_download_url: string;
-  expired: boolean;
-}
 
 function parseQuery(
   req: NextApiRequest
@@ -37,104 +36,13 @@ function parseQuery(
   };
 }
 
-async function findLatestArtifact(
-  artifactName: string,
-  token: string
-): Promise<GitHubArtifact | null> {
-  const url = new URL(
-    `https://api.github.com/repos/${CLIENT_NODE_REPO}/actions/artifacts`
-  );
-  url.searchParams.set("name", artifactName);
-  url.searchParams.set("per_page", "1");
-
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.status}`);
-  }
-
-  const data = (await response.json()) as { artifacts: GitHubArtifact[] };
-  const artifact = data.artifacts[0];
-  if (!artifact || artifact.expired) return null;
-  return artifact;
-}
-
-async function resolveArtifactDownloadUrl(
-  artifact: GitHubArtifact,
-  token: string
-): Promise<string> {
-  const response = await fetch(artifact.archive_download_url, {
-    redirect: "manual",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-    },
-  });
-
-  if (response.status !== 302 && response.status !== 303) {
-    throw new Error(`Unexpected GitHub download response: ${response.status}`);
-  }
-
-  const location = response.headers.get("location");
-  if (!location) {
-    throw new Error("GitHub download redirect missing location");
-  }
-
-  return location;
-}
-
-async function downloadArtifactZip(
-  artifact: GitHubArtifact,
-  token: string
-): Promise<Uint8Array> {
-  // Follow redirects from the GitHub API; auth is stripped automatically on
-  // cross-origin redirect to the signed blob-storage URL.
-  const response = await fetch(artifact.archive_download_url, {
-    redirect: "follow",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub artifact download failed: ${response.status}`);
-  }
-
-  return new Uint8Array(await response.arrayBuffer());
-}
-
-function extractDmgFromArtifactZip(
-  zipData: Uint8Array,
-  artifactName: string
-): Uint8Array {
-  const files = unzipSync(zipData);
-  const dmgName = Object.keys(files).find(
-    (name) => name === artifactName || name.endsWith(".dmg")
-  );
-
-  if (!dmgName) {
-    throw new Error("DMG not found in artifact archive");
-  }
-
-  return files[dmgName];
-}
-
-function serveMacosDmg(
+function setDownloadHeaders(
   res: NextApiResponse,
-  dmgData: Uint8Array,
+  platform: SupportedPlatform,
   filename: string
 ) {
-  res.setHeader("Content-Type", "application/x-apple-diskimage");
+  res.setHeader("Content-Type", getDownloadContentType(platform));
   res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-  res.setHeader("Content-Length", dmgData.byteLength);
-  return res.status(200).send(Buffer.from(dmgData));
 }
 
 export default async function handler(
@@ -167,24 +75,18 @@ export default async function handler(
     }
 
     if (req.method === "HEAD") {
-      if (parsed.platform === "macos") {
-        res.setHeader("Content-Type", "application/x-apple-diskimage");
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename="${downloadFilename}"`
-        );
-      }
+      setDownloadHeaders(res, parsed.platform, downloadFilename);
       return res.status(200).end();
     }
 
-    if (parsed.platform === "macos") {
-      const zipData = await downloadArtifactZip(artifact, token);
-      const dmgData = extractDmgFromArtifactZip(zipData, artifactName);
-      return serveMacosDmg(res, dmgData, downloadFilename);
-    }
+    // Unwrapped on the server for every platform, so what lands in the user's
+    // downloads folder is the thing they run — no zip to open first.
+    const zipData = await downloadArtifactZip(artifact, token);
+    const payload = extractArtifactFile(zipData, artifactName);
 
-    const downloadUrl = await resolveArtifactDownloadUrl(artifact, token);
-    return res.redirect(302, downloadUrl);
+    setDownloadHeaders(res, parsed.platform, downloadFilename);
+    res.status(200);
+    return await sendBinaryChunked(res, payload);
   } catch (error) {
     console.error("Download error:", error);
     return res.status(500).json({ error: "Failed to prepare download" });

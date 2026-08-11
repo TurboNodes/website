@@ -5,7 +5,12 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { AuthCard, AuthShell } from "@/components/brand/AuthShell";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { DownloadOptions } from "@/components/download/DownloadOptions";
-import { getOSName, type Platform } from "@/lib/turboClientDownload";
+import { InstallTokenCommand } from "@/components/download/InstallTokenCommand";
+import {
+  getOSName,
+  needsExecutableBit,
+  type Platform,
+} from "@/lib/turboClientDownload";
 
 type SupportedPlatform = Exclude<Platform, "" | "unknown">;
 
@@ -38,14 +43,20 @@ export default function DashboardDownloadPage() {
       {justDownloaded && (
         <div className="mb-5 flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-300">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          Download started for {getOSName(justDownloaded)}. Run the installer,
-          then check the{" "}
+          Download started for {getOSName(justDownloaded)}.{" "}
+          {needsExecutableBit(justDownloaded)
+            ? "Make it executable with chmod +x and run it, then check the"
+            : "Run the installer, then check the"}{" "}
           <Link href="/dashboard/nodes" className="underline underline-offset-2">
             Nodes page
           </Link>{" "}
           once it comes online.
         </div>
       )}
+
+      {/* Above the download picker: a headless box has no browser to finish
+          pairing in, so it cannot use any of the options below without help. */}
+      <InstallTokenCommand className="mb-5" />
 
       <DownloadOptions layout="wide" onDownloaded={setJustDownloaded} />
     </DashboardShell>
