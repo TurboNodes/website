@@ -27,7 +27,6 @@ import { Web3Provider } from "@/components/providers/Web3Provider";
 function PayoutWalletSectionFallback() {
   return (
     <SettingsPanel
-      label="payout_wallet"
       title="Payout wallets"
       description={`Link a wallet on each chain to receive ${REWARD_TOKEN}.`}
     >
@@ -174,7 +173,6 @@ function PayoutWalletSectionInner() {
 
   return (
     <SettingsPanel
-      label="payout_wallet"
       title="Payout wallets"
       description={`Link a wallet on each chain to receive ${REWARD_TOKEN}. Ethereum, Base, and Solana are networks — your rewards are always paid in ${REWARD_TOKEN} on the chain you select.`}
     >

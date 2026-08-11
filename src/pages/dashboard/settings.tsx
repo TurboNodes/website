@@ -1,6 +1,5 @@
 import React from "react";
-import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { AuthCard, AuthShell } from "@/components/brand/AuthShell";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
@@ -28,32 +27,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <DashboardShell title="Account Settings | Turbo">
-      <div className="h-full overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-orange-400 transition-colors mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to dashboard
-          </Link>
-
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-white tracking-tight">
-              Account settings
-            </h1>
-            <p className="text-sm text-neutral-500 mt-1">
-              Manage your profile, payout wallet, and session.
-            </p>
-          </div>
-
-          <div className="space-y-5">
-            <AccountSection />
-            <PayoutWalletSection />
-            <SessionSection />
-          </div>
+    <DashboardShell
+      title="Account Settings | Turbo"
+      heading="Settings"
+      description="Manage your profile, payout wallets, and session."
+    >
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5 items-start">
+        <div className="space-y-4 sm:space-y-5">
+          <AccountSection />
+          <SessionSection />
         </div>
+        <PayoutWalletSection />
       </div>
     </DashboardShell>
   );

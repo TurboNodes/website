@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { NodeStats, UserStats } from "@/types";
@@ -13,9 +13,10 @@ interface SupabaseRealtimeContextValue {
   nodeStats: NodeStats[] | null;
   earningsHistory: number[];
   loading: boolean;
+  refreshing: boolean;
   error: string | null;
-  isConnected: boolean;
   hasNodeData: boolean | null;
+  refetch: () => Promise<void>;
 }
 
 const SupabaseRealtimeContext = createContext<SupabaseRealtimeContextValue | null>(null);
@@ -26,10 +27,112 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
   const [nodeStats, setNodeStats] = useState<NodeStats[] | null>(null);
   const [earningsHistory, setEarningsHistory] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [hasNodeData, setHasNodeData] = useState<boolean | null>(null);
   const fetchIdRef = useRef(0);
+  const userIdRef = useRef<string | null>(null);
+  const cancelledRef = useRef(false);
+
+  const fetchData = useCallback(async (showLoading: boolean) => {
+    const userId = userIdRef.current;
+    if (!userId) return;
+
+    const fetchId = ++fetchIdRef.current;
+
+    try {
+      if (showLoading) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+      setError(null);
+
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (cancelledRef.current || fetchId !== fetchIdRef.current) return;
+
+      if (userError && userError.code !== "PGRST116") {
+        console.error("User fetch error:", userError);
+        setError(`User data error: ${userError.message}`);
+        return;
+      }
+
+      const { data: nodesData, error: nodesError } = await supabase
+        .from("nodes")
+        .select("*")
+        .eq("userId", userId);
+
+      if (cancelledRef.current || fetchId !== fetchIdRef.current) return;
+
+      if (nodesError) {
+        console.error("Nodes fetch error:", nodesError);
+        setError(`Nodes data error: ${nodesError.message}`);
+        return;
+      }
+
+      if (userData && nodesData) {
+        const userStatsData: UserStats = {
+          id: userData.id,
+          email: userData.email,
+          username: userData.username,
+          totalEarnings: Number(userData.totalEarnings) || 0,
+          todayEarnings: Number(userData.todayEarnings) || 0,
+          createdAt: new Date(userData.createdAt),
+          nodes: [],
+        };
+
+        const nodesStatsData: NodeStats[] = nodesData.map((node: Record<string, unknown>) => ({
+          id: node.id as string,
+          isActive: (node.isActive as boolean) ?? false,
+          nodeIp: (node.nodeIp as string | null) ?? null,
+          dailyEarnings: (node.dailyEarnings as Record<string, number>) || {},
+          bandwidthUsed: node.bandwidthUsed as number,
+          uptimeMinutes: node.uptimeMinutes as number,
+          createdAt: new Date(node.createdAt as string),
+          updatedAt: new Date(node.updatedAt as string),
+          userId: node.userId as string,
+          isConnected:
+            (node.isActive as boolean) &&
+            Date.now() - new Date(node.updatedAt as string).getTime() < 5 * 1000 * 60,
+          location: "Unknown",
+          requestCount: 0,
+        }));
+
+        userStatsData.totalEarnings = calculateTotalEarnings(nodesStatsData);
+        userStatsData.todayEarnings = calculateTodayEarnings(nodesStatsData);
+        userStatsData.nodes = nodesStatsData;
+
+        setUserStats(userStatsData);
+        setNodeStats(nodesStatsData);
+        setHasNodeData(nodesStatsData.length > 0);
+
+        const history = extractEarningsHistory(nodesStatsData);
+        setEarningsHistory(history);
+      } else if (!userData) {
+        setUserStats(null);
+        setNodeStats([]);
+        setEarningsHistory([0, 0, 0, 0, 0, 0, 0]);
+        setHasNodeData(false);
+      }
+    } catch (err) {
+      if (cancelledRef.current || fetchId !== fetchIdRef.current) return;
+      console.error("Error in fetchData:", err);
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      if (fetchId === fetchIdRef.current && !cancelledRef.current) {
+        if (showLoading) {
+          setLoading(false);
+        } else {
+          setRefreshing(false);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (authLoading) {
@@ -37,166 +140,39 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
     }
 
     if (!isAuthenticated || !user) {
+      userIdRef.current = null;
       setUserStats(null);
       setNodeStats(null);
       setLoading(false);
       setError(null);
       setHasNodeData(null);
-      setIsConnected(false);
       return;
     }
 
-    const userId = user.id;
-    let cancelled = false;
-    let hasSubscribed = false;
-
-    async function fetchData(showLoading: boolean) {
-      const fetchId = ++fetchIdRef.current;
-
-      try {
-        if (showLoading) {
-          setLoading(true);
-        }
-        setError(null);
-
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", userId)
-          .single();
-
-        if (cancelled || fetchId !== fetchIdRef.current) return;
-
-        if (userError && userError.code !== "PGRST116") {
-          console.error("User fetch error:", userError);
-          setError(`User data error: ${userError.message}`);
-          return;
-        }
-
-        const { data: nodesData, error: nodesError } = await supabase
-          .from("nodes")
-          .select("*")
-          .eq("userId", userId);
-
-        if (cancelled || fetchId !== fetchIdRef.current) return;
-
-        if (nodesError) {
-          console.error("Nodes fetch error:", nodesError);
-          setError(`Nodes data error: ${nodesError.message}`);
-          return;
-        }
-
-        if (userData && nodesData) {
-          const userStatsData: UserStats = {
-            id: userData.id,
-            email: userData.email,
-            username: userData.username,
-            totalEarnings: Number(userData.totalEarnings) || 0,
-            todayEarnings: Number(userData.todayEarnings) || 0,
-            createdAt: new Date(userData.createdAt),
-            nodes: [],
-          };
-
-          const nodesStatsData: NodeStats[] = nodesData.map((node: Record<string, unknown>) => ({
-            id: node.id as string,
-            isActive: (node.isActive as boolean) ?? false,
-            nodeIp: (node.nodeIp as string | null) ?? null,
-            dailyEarnings: (node.dailyEarnings as Record<string, number>) || {},
-            bandwidthUsed: node.bandwidthUsed as number,
-            uptimeMinutes: node.uptimeMinutes as number,
-            createdAt: new Date(node.createdAt as string),
-            updatedAt: new Date(node.updatedAt as string),
-            userId: node.userId as string,
-            isConnected:
-              (node.isActive as boolean) &&
-              Date.now() - new Date(node.updatedAt as string).getTime() < 5 * 1000 * 60,
-            location: "Unknown",
-            requestCount: 0,
-          }));
-
-          userStatsData.totalEarnings = calculateTotalEarnings(nodesStatsData);
-          userStatsData.todayEarnings = calculateTodayEarnings(nodesStatsData);
-          userStatsData.nodes = nodesStatsData;
-
-          setUserStats(userStatsData);
-          setNodeStats(nodesStatsData);
-          setHasNodeData(nodesStatsData.length > 0);
-
-          const history = extractEarningsHistory(nodesStatsData);
-          setEarningsHistory(history);
-        } else if (!userData) {
-          setUserStats(null);
-          setNodeStats([]);
-          setEarningsHistory([0, 0, 0, 0, 0, 0, 0]);
-          setHasNodeData(false);
-        }
-      } catch (err) {
-        if (cancelled || fetchId !== fetchIdRef.current) return;
-        console.error("Error in fetchData:", err);
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        if (showLoading && fetchId === fetchIdRef.current && !cancelled) {
-          setLoading(false);
-        }
-      }
-    }
+    userIdRef.current = user.id;
+    cancelledRef.current = false;
 
     void fetchData(true);
 
-    const channel = supabase
-      .channel(`node-data-changes-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "nodes",
-          filter: `userId=eq.${userId}`,
-        },
-        () => {
-          void fetchData(false);
-        },
-      )
-      .subscribe((status) => {
-        if (cancelled) return;
-
-        const subscribed = status === "SUBSCRIBED";
-        setIsConnected(subscribed);
-
-        // After idle tabs, the websocket often reconnects having missed
-        // DELETE/INSERT churn. Refetch so the node list can't stick short.
-        if (subscribed && hasSubscribed) {
-          void fetchData(false);
-        }
-        if (subscribed) {
-          hasSubscribed = true;
-        }
-      });
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        void fetchData(false);
-      }
-    };
-
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
       fetchIdRef.current += 1;
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      supabase.removeChannel(channel);
     };
-  }, [user?.id, isAuthenticated, authLoading]);
+  }, [user?.id, isAuthenticated, authLoading, fetchData]);
+
+  const refetch = useCallback(async () => {
+    await fetchData(false);
+  }, [fetchData]);
 
   const value: SupabaseRealtimeContextValue = {
     userStats,
     nodeStats,
     earningsHistory,
     loading: authLoading || loading,
+    refreshing,
     error,
-    isConnected,
     hasNodeData,
+    refetch,
   };
 
   return (

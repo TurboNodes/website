@@ -44,7 +44,6 @@ export function AccountSection() {
 
   return (
     <SettingsPanel
-      label="account"
       title="Account"
       description="Your profile details are managed by your sign-in provider."
     >

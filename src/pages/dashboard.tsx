@@ -27,7 +27,6 @@ export default function TurboNodeDashboard() {
     earningsHistory,
     loading,
     error,
-    isConnected: supabaseConnected,
     hasNodeData,
   } = useSupabaseRealtime();
 
@@ -54,7 +53,12 @@ export default function TurboNodeDashboard() {
   }
 
   return (
-    <DashboardShell title="Turbo Node Dashboard">
+    <DashboardShell
+      title="Turbo Node Dashboard"
+      heading="Dashboard"
+      description="Live earnings and node health across your account."
+      scroll={false}
+    >
       {loading ? (
         <div className="h-full flex items-center justify-center">
           <div className="text-center">
@@ -72,7 +76,6 @@ export default function TurboNodeDashboard() {
           earningsHistory={earningsHistory}
           loading={loading}
           error={error}
-          supabaseConnected={supabaseConnected}
         />
       )}
 

@@ -68,3 +68,12 @@ export function calculateTodayEarnings(nodes: NodeStats[]): number {
 export function calculateTotalEarnings(nodes: NodeStats[]): number {
   return nodes.reduce((total, node) => total + sumNodeDailyEarnings(node.dailyEarnings), 0);
 }
+
+export function formatUptime(uptimeMinutes: number): string {
+  const hours = Math.floor(uptimeMinutes / 60);
+  const minutes = uptimeMinutes % 60;
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}

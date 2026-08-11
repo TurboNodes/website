@@ -56,7 +56,6 @@ export function ShareReferralButtons({ referralLink }: ShareReferralButtonsProps
 
   return (
     <SettingsPanel
-      label="share"
       title="Share on social"
       description="One-click share to X, LinkedIn, Facebook, Reddit, and WhatsApp."
     >

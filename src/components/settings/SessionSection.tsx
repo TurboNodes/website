@@ -9,7 +9,6 @@ export function SessionSection() {
 
   return (
     <SettingsPanel
-      label="session"
       title="Session"
       description="Sign out of your Turbo account on this device."
     >

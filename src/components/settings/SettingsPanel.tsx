@@ -1,38 +1,38 @@
 import React from "react";
+import { Panel, PanelTitle } from "@/components/dashboard/ui";
 import { cn } from "@/lib/utils";
 
 interface SettingsPanelProps {
-  label: string;
   title: string;
   description?: string;
+  /** Optional control rendered on the title row (link, pill button, badge…). */
+  action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }
 
-/** Bordered dark panel used to group a settings section, matching the dashboard's visual language. */
+/** Bordered panel used to group a section, matching the dashboard's visual language. */
 export function SettingsPanel({
-  label,
   title,
   description,
+  action,
   children,
   className,
 }: SettingsPanelProps) {
   return (
-    <section
-      className={cn(
-        "rounded-2xl border border-neutral-800 bg-neutral-900/50 backdrop-blur-sm p-6 sm:p-7",
-        className,
-      )}
-    >
-      <p className="text-[10px] font-mono uppercase tracking-widest text-orange-400/90 mb-2">
-        // {label}
-      </p>
-      <h2 className="text-lg font-semibold text-white mb-1">{title}</h2>
-      {description && (
-        <p className="text-sm text-neutral-400 mb-5 leading-relaxed">{description}</p>
-      )}
-      {!description && <div className="mb-5" />}
+    <Panel className={cn("flex flex-col", className)}>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <PanelTitle>{title}</PanelTitle>
+          {description && (
+            <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+              {description}
+            </p>
+          )}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
+      </div>
       {children}
-    </section>
+    </Panel>
   );
 }

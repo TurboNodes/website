@@ -9,7 +9,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PillButton } from "@/components/dashboard/ui";
 import { ChainSelector } from "@/components/shared/ChainSelector";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
@@ -102,7 +102,7 @@ export function WithdrawalSection() {
 
   if (loading) {
     return (
-      <SettingsPanel label="withdrawal" title="Withdraw earnings">
+      <SettingsPanel title="Withdraw earnings" className="xl:col-span-7">
         <div className="flex items-center gap-2 text-sm text-neutral-500">
           <Loader2 className="w-4 h-4 animate-spin" />
           Loading balance…
@@ -114,9 +114,9 @@ export function WithdrawalSection() {
   return (
     <>
       <SettingsPanel
-        label="withdrawal"
         title="Withdraw USDC"
         description="Withdraw your earnings as USDC. Pick a chain (Ethereum, Base, or Solana) — that is the network your USDC will be sent on, not the token you receive."
+        className="xl:col-span-7"
       >
         {withdrawSuccess && (
           <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-4 py-3">
@@ -248,10 +248,11 @@ export function WithdrawalSection() {
           )}
         </div>
 
-        <Button
+        <PillButton
           onClick={handleWithdrawClick}
           disabled={!canWithdraw || withdrawing}
-          className="w-full sm:w-auto bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50"
+          size="lg"
+          className="w-full sm:w-auto"
         >
           {withdrawing ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -261,13 +262,13 @@ export function WithdrawalSection() {
               Withdraw {REWARD_TOKEN}
             </>
           )}
-        </Button>
+        </PillButton>
       </SettingsPanel>
 
       <SettingsPanel
-        label="history"
         title="Withdrawal history"
         description="Past withdrawal requests and their status."
+        className="xl:col-span-5"
       >
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <Coins className="w-8 h-8 text-neutral-700 mb-3" />
@@ -331,25 +332,20 @@ export function WithdrawalSection() {
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-              <Button
-                variant="outline"
+              <PillButton
+                variant="secondary"
                 onClick={() => setShowConfirm(false)}
                 disabled={withdrawing}
-                className="border-neutral-700 bg-transparent text-neutral-300 hover:bg-neutral-800 hover:text-white"
               >
                 Cancel
-              </Button>
-              <Button
-                onClick={handleConfirmWithdraw}
-                disabled={withdrawing}
-                className="bg-orange-500 text-white hover:bg-orange-600"
-              >
+              </PillButton>
+              <PillButton onClick={handleConfirmWithdraw} disabled={withdrawing}>
                 {withdrawing ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   `Confirm ${REWARD_TOKEN} withdrawal`
                 )}
-              </Button>
+              </PillButton>
             </div>
           </div>
         </div>

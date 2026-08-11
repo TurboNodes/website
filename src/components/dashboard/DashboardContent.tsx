@@ -11,7 +11,6 @@ interface DashboardContentProps {
   earningsHistory: number[];
   loading: boolean;
   error: string | null;
-  supabaseConnected: boolean;
 }
 
 export function DashboardContent({
@@ -19,7 +18,6 @@ export function DashboardContent({
   nodeStats,
   earningsHistory,
   error,
-  supabaseConnected,
 }: DashboardContentProps) {
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
   const formatBytes = (bytes: number) => {
@@ -40,7 +38,7 @@ export function DashboardContent({
     : 0;
 
   return (
-    <div className="h-full flex flex-col gap-5 p-5 sm:p-6 lg:p-8 overflow-hidden">
+    <div className="h-full flex flex-col gap-4 sm:gap-5 px-4 sm:px-6 lg:px-8 py-5 sm:py-6 overflow-y-auto lg:overflow-hidden">
       {/* KPI strip */}
       <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatsCard
@@ -72,7 +70,7 @@ export function DashboardContent({
 
       {/* Main panels */}
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
-        <div className="lg:col-span-8 min-h-[280px] lg:min-h-0 flex flex-col">
+        <div className="lg:col-span-8 h-[320px] lg:h-auto lg:min-h-0 flex flex-col">
           <EarningsChart
             data={earningsHistory}
             weekTotal={weekTotal}
@@ -80,10 +78,10 @@ export function DashboardContent({
           />
         </div>
 
-        <div className="lg:col-span-4 min-h-[320px] lg:min-h-0 flex flex-col">
+        <div className="lg:col-span-4 h-[420px] lg:h-auto lg:min-h-0 flex flex-col">
           <NodeStatus
             nodeStats={nodeStats}
-            isConnected={supabaseConnected && !!userStats}
+            hasData={!!userStats}
           />
         </div>
       </div>

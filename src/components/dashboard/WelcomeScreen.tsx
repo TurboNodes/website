@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 import { markOnboardingDownloadComplete } from "@/hooks/useOnboardingProgress";
 import { useTurboDownload } from "@/hooks/useTurboDownload";
 import {
-  buildDownloadPagePath,
   isSupportedPlatform,
   ONBOARDING_SECTION_ID,
 } from "@/lib/turboClientDownload";
@@ -70,7 +69,7 @@ export function WelcomeScreen({ showPopup = false, onClosePopup }: WelcomeScreen
           <p className="text-xs text-neutral-500">
             Not on {osName}?{" "}
             <Link
-              href={buildDownloadPagePath()}
+              href="/dashboard/download"
               className="text-orange-400/80 hover:text-orange-400 underline underline-offset-2"
             >
               Other platforms
