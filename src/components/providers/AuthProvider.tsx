@@ -9,7 +9,11 @@ import React, {
 import { useRouter } from "next/router";
 import { supabase } from "@/lib/supabase";
 import { bootstrapUserAfterAuth } from "@/lib/claimReferral";
-import { formatWeb3AuthError, WEB3_AUTH_STATEMENT } from "@/lib/web3Auth";
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  formatWeb3AuthError,
+  WEB3_AUTH_STATEMENT,
+} from "@/lib/web3Auth";
 import type { EthereumWallet, SolanaWallet } from "@supabase/auth-js";
 import type { Session, User } from "@supabase/supabase-js";
 import type { Hex } from "viem";
@@ -54,6 +58,8 @@ interface AuthContextValue extends AuthState {
     (chain: "solana", options?: SolanaSignInOptions): Promise<void>;
   };
   signOut: () => Promise<void>;
+  /** Persist a user-chosen display name. Pass an empty string to reset it. */
+  updateDisplayName: (name: string) => Promise<void>;
   clearAuthError: () => void;
   isAuthenticated: boolean;
 }
@@ -280,6 +286,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [router],
   );
 
+  const updateDisplayName = useCallback(async (name: string) => {
+    const trimmed = name.trim().slice(0, DISPLAY_NAME_MAX_LENGTH);
+
+    const { data, error } = await supabase.auth.updateUser({
+      // Empty clears the override so the provider's name takes over again.
+      data: { display_name: trimmed || null },
+    });
+
+    if (error) {
+      console.error("Error updating display name:", error);
+      throw new Error(error.message || "Failed to update display name.");
+    }
+
+    if (data.user) {
+      setAuthState((prev) => ({ ...prev, user: data.user }));
+    }
+  }, []);
+
   const clearAuthError = useCallback(() => {
     setAuthState((prev) => ({ ...prev, error: null }));
   }, []);
@@ -336,6 +360,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signInWithGoogle,
       signInWithWeb3Wallet,
       signOut,
+      updateDisplayName,
       clearAuthError,
       isAuthenticated: !!authState.user,
     }),
@@ -345,6 +370,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signInWithGoogle,
       signInWithWeb3Wallet,
       signOut,
+      updateDisplayName,
       clearAuthError,
     ],
   );

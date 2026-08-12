@@ -99,8 +99,11 @@ export function SupabaseRealtimeProvider({ children }: { children: React.ReactNo
           isConnected:
             (node.isActive as boolean) &&
             Date.now() - new Date(node.updatedAt as string).getTime() < 5 * 1000 * 60,
-          location: "Unknown",
-          requestCount: 0,
+          // Both are written by the Turbo server, the only side that sees a
+          // node's traffic or resolves its country. A node that has not
+          // reported yet simply has nothing stored for them.
+          location: (node.location as string | null) || "Unknown",
+          requestCount: Number(node.requestCount ?? 0),
         }));
 
         userStatsData.totalEarnings = calculateTotalEarnings(nodesStatsData);

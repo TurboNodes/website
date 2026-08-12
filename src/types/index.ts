@@ -20,11 +20,13 @@ export interface NodeStats {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
-  
+  /** Country the node exits from, as display text: "France", not "FR". */
+  location?: string;
+  /** Lifetime proxied connections served by this node. */
+  requestCount?: number;
+
   // Additional computed properties for UI
   isConnected?: boolean; // Computed based on recent activity
-  location?: string; // May come from external API
-  requestCount?: number; // May be computed or come from external source
 }
 
 export interface EarningsDay {

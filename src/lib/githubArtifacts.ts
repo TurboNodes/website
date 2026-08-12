@@ -8,11 +8,35 @@ import { CLIENT_NODE_REPO } from "@/lib/turboClientDownload";
 // by /api/download (desktop) and /api/download/turbod (headless).
 
 export interface GitHubArtifact {
+  id: number;
   name: string;
+  created_at: string;
   archive_download_url: string;
   expired: boolean;
+  workflow_run?: { id: number; head_branch: string | null } | null;
 }
 
+// The branch a download is allowed to come from. Without this a build from a
+// pull request could be newer than main's and win the "latest" comparison.
+const RELEASE_BRANCH = "main";
+
+// One page comfortably covers every retained artifact for a single name (they
+// expire long before a hundred builds accumulate), so no pagination is needed
+// to see the full candidate set.
+const ARTIFACT_PAGE_SIZE = 100;
+
+// Newest first: by build time, falling back to artifact id for two artifacts
+// uploaded in the same second by the same run.
+function compareNewestFirst(a: GitHubArtifact, b: GitHubArtifact): number {
+  const byTime =
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  return byTime !== 0 ? byTime : b.id - a.id;
+}
+
+// Picks the most recent live build for a name. The GitHub API's own ordering is
+// not contractual — asking for per_page=1 and taking artifacts[0] has handed
+// back a previous run's build — so the whole candidate set is fetched and
+// ordered here instead.
 export async function findLatestArtifact(
   artifactName: string,
   token: string
@@ -21,13 +45,17 @@ export async function findLatestArtifact(
     `https://api.github.com/repos/${CLIENT_NODE_REPO}/actions/artifacts`
   );
   url.searchParams.set("name", artifactName);
-  url.searchParams.set("per_page", "1");
+  url.searchParams.set("per_page", String(ARTIFACT_PAGE_SIZE));
 
   const response = await fetch(url, {
+    // Any cached listing is a stale listing: a build uploaded a minute ago has
+    // to be visible here immediately.
+    cache: "no-store",
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
+      "Cache-Control": "no-cache",
     },
   });
 
@@ -36,9 +64,22 @@ export async function findLatestArtifact(
   }
 
   const data = (await response.json()) as { artifacts: GitHubArtifact[] };
-  const artifact = data.artifacts[0];
-  if (!artifact || artifact.expired) return null;
-  return artifact;
+
+  // The name filter is applied server-side, but re-checking it locally keeps a
+  // partial match from ever being served under the wrong name.
+  const live = data.artifacts.filter(
+    (artifact) => artifact.name === artifactName && !artifact.expired
+  );
+
+  const fromReleaseBranch = live.filter(
+    (artifact) => artifact.workflow_run?.head_branch === RELEASE_BRANCH
+  );
+
+  // Older artifacts predate this filter's assumptions (workflow_run can be
+  // absent), so fall back to the unfiltered set rather than serving nothing.
+  const candidates = fromReleaseBranch.length > 0 ? fromReleaseBranch : live;
+
+  return candidates.sort(compareNewestFirst)[0] ?? null;
 }
 
 export async function downloadArtifactZip(

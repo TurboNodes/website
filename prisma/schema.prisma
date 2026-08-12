@@ -49,7 +49,9 @@ model Node {
   dailyEarnings Json     @default("{}") @db.JsonB
   bandwidthUsed Float? // in GB
   uptimeMinutes Int?
-  
+  requestCount  BigInt   @default(0) // lifetime proxied connections served
+  location      String? // display text, e.g. "France"
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

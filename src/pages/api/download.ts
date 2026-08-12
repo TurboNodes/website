@@ -43,6 +43,9 @@ function setDownloadHeaders(
 ) {
   res.setHeader("Content-Type", getDownloadContentType(platform));
   res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  // This URL is stable while the build behind it is not, so nothing may hold on
+  // to a response: a cached one hands out a build that CI has already replaced.
+  res.setHeader("Cache-Control", "no-store, max-age=0");
 }
 
 export default async function handler(

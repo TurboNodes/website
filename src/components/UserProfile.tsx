@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 import { formatUsdcOnChain, getPrimaryPayoutWallet, truncateAddress } from "@/lib/payoutChains";
 import { TOP_REFERRAL_TIER, formatRate } from "@/lib/referralTiers";
-import { getAuthDisplayName, getAuthDisplaySubtitle } from "@/lib/web3Auth";
+import { getAuthDisplayName } from "@/lib/web3Auth";
 
 const DISCORD_SUPPORT_URL = "https://discord.gg/ZqdvQkSEc7";
 
@@ -28,7 +28,6 @@ export function UserProfile() {
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   const displayName = getAuthDisplayName(user);
-  const displaySubtitle = getAuthDisplaySubtitle(user);
   const initials = displayName
     .split(" ")
     .map((n: string) => n[0])
@@ -96,48 +95,19 @@ export function UserProfile() {
           role="menu"
           className="absolute right-0 top-[calc(100%+6px)] z-50 w-72 rounded-xl border border-neutral-800 bg-neutral-900 shadow-xl shadow-black/40 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
         >
-          {/* Profile header */}
-          <div className="px-4 py-3.5 border-b border-neutral-800/80">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10 border border-neutral-700 grayscale opacity-80">
-                <AvatarImage src={avatarUrl} alt={displayName} />
-                <AvatarFallback className="bg-neutral-800 text-neutral-400 font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="font-medium text-neutral-300 truncate">{displayName}</p>
-                <p className="text-sm text-neutral-500 truncate">
-                  {displaySubtitle ?? user?.email ?? "—"}
-                </p>
-              </div>
-            </div>
-
-            {primaryWallet ? (
+          {!primaryWallet && (
+            <div className="px-4 py-3.5 border-b border-neutral-800/80">
               <Link
                 href="/dashboard/settings"
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className="mt-3 flex items-center gap-2 rounded-lg bg-neutral-950/60 border border-neutral-800/60 px-3 py-2 hover:border-neutral-700 hover:bg-neutral-800/40 transition-colors"
-              >
-                <Wallet className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
-                <span className="font-mono text-xs text-neutral-400 truncate">
-                  {formatUsdcOnChain(primaryWallet.chain)} ·{" "}
-                  {truncateAddress(primaryWallet.wallet.address)}
-                </span>
-              </Link>
-            ) : (
-              <Link
-                href="/dashboard/settings"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="mt-3 flex items-center gap-2 rounded-lg border border-dashed border-neutral-800 px-3 py-2 text-xs text-neutral-500 hover:text-neutral-300 hover:border-neutral-700 transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-dashed border-neutral-800 px-3 py-2 text-xs text-neutral-500 hover:text-neutral-300 hover:border-neutral-700 transition-colors"
               >
                 <Wallet className="w-3.5 h-3.5 shrink-0" />
                 Set up payout wallet
               </Link>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Menu actions */}
           <div className="p-1.5 space-y-0.5">

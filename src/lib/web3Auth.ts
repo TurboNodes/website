@@ -451,8 +451,24 @@ export function isWeb3User(user: User | null | undefined): boolean {
   );
 }
 
+/** Max length accepted for a user-chosen display name. */
+export const DISPLAY_NAME_MAX_LENGTH = 48;
+
+/**
+ * The name the user set themselves, if any. Stored under its own metadata key
+ * so an OAuth re-login (which refreshes `full_name` & co.) can't overwrite it.
+ */
+export function getCustomDisplayName(user: User | null | undefined): string | null {
+  const custom = user?.user_metadata?.display_name;
+  if (typeof custom === "string" && custom.trim()) return custom.trim();
+  return null;
+}
+
 export function getAuthDisplayName(user: User | null | undefined): string {
   if (!user) return "User";
+
+  const custom = getCustomDisplayName(user);
+  if (custom) return custom;
 
   const metadataName =
     user.user_metadata?.full_name ||

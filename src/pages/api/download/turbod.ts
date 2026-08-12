@@ -66,6 +66,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.setHeader("Content-Type", "application/octet-stream");
     res.setHeader("Content-Disposition", 'attachment; filename="turbod"');
+    // Same reasoning as /api/download: a cached response pins an old build.
+    res.setHeader("Cache-Control", "no-store, max-age=0");
     res.status(200);
     return await sendBinaryChunked(res, binary);
   } catch (error) {
